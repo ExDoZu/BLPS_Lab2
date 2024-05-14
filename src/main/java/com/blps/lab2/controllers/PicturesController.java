@@ -26,7 +26,7 @@ public class PicturesController {
 
     @GetMapping("/pictures/{name}")
     public ResponseEntity<?> getMethodName(@PathVariable String name) {
-
+        // TODO logstats
         GetResult result;
         try {
             result = pictureService.getPicture(name);
@@ -40,7 +40,7 @@ public class PicturesController {
 
     @PostMapping("/pictures")
     public ResponseEntity<?> postMethodName(@RequestParam("file") MultipartFile file) {
-
+        // TODO logstats
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("Please select a file to upload");
         }

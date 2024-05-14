@@ -4,8 +4,6 @@ import lombok.*;
 
 import java.util.Date;
 
-import com.blps.lab2.model.beans.user.User;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -65,6 +63,6 @@ public class Post {
     private Address address;
 
     @ManyToOne
-    @JoinColumn(name = "metro_id")
+    @JoinColumn(name = "metro_id", nullable = false)
     private Metro metro;
 }

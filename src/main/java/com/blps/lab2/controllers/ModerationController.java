@@ -36,18 +36,13 @@ public class ModerationController {
             @RequestHeader("authorization") String token,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        System.out.println("authorization: "+token);
         if (size <= 0)
             return ResponseEntity.badRequest().body("Invalid page size");
-        String phone;
-        try {
-            phone = token.split(":")[0];
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Invalid token");
-
-        }
+            
         ModerationResult moderationResult;
         try {
-            moderationResult = moderationService.getModerationPosts(page, size, phone);
+            moderationResult = moderationService.getModerationPosts(page, size);
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }

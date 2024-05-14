@@ -29,6 +29,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                         "and (:room_number is null or p.roomNumber = :room_number) " +
                         "and (:min_floor is null or p.floor >= :min_floor) " +
                         "and (:max_floor is null or p.floor <= :max_floor) " +
+                        
                         "and (:station_name is null or m.name = :station_name) " +
                         "and (:branch_number is null or m.branchNumber = :branch_number)" +
 

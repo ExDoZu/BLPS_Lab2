@@ -26,9 +26,9 @@ import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.InvalidDataException;
 import com.blps.lab2.exceptions.NotFoundException;
 import com.blps.lab2.model.beans.post.Post;
-import com.blps.lab2.model.beans.user.User;
+import com.blps.lab2.model.beans.post.User;
 import com.blps.lab2.model.repository.post.PostRepository;
-import com.blps.lab2.model.repository.user.UserRepository;
+import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.PostService;
 import com.blps.lab2.model.services.PostService.GetResult;
 
@@ -177,7 +177,7 @@ public class PostsController {
         } catch (Exception e) {
             noUser = true;
         }
-
+        //TODO to service. logstats
         Post post = postRepository.findById(postId).orElse(null);
         if (post == null)
             return ResponseEntity.notFound().build();

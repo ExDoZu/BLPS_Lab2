@@ -1,6 +1,6 @@
 package com.blps.lab2.controllers.dto;
 
-import com.blps.lab2.model.beans.user.User;
+import com.blps.lab2.model.beans.post.User;
 
 import lombok.*;
 

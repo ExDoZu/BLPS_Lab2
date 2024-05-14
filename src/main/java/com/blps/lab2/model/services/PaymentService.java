@@ -10,10 +10,13 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.PaymentException;
+import com.blps.lab2.model.beans.logstats.ModerHistory;
+import com.blps.lab2.model.beans.logstats.UserHistory;
 import com.blps.lab2.model.beans.post.Post;
-import com.blps.lab2.model.beans.user.User;
+import com.blps.lab2.model.beans.post.User;
+import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
-import com.blps.lab2.model.repository.user.UserRepository;
+import com.blps.lab2.model.repository.post.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,7 +28,9 @@ public class PaymentService {
     private final UserRepository userRepository;
 
     @Qualifier("postTxManager")
-    private final PlatformTransactionManager txManager;
+    private final PlatformTransactionManager postTxManager;
+
+    private final UserHistoryRepository userHistoryRepository;
 
     public class PayResult {
         private double balance;
@@ -66,7 +71,7 @@ public class PaymentService {
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setName("Payment transaction");
 
-        TransactionStatus status = txManager.getTransaction(def);
+        TransactionStatus status = postTxManager.getTransaction(def);
         User user;
         try {
             Post post = postRepository.findById(postId).orElse(null);
@@ -88,11 +93,18 @@ public class PaymentService {
             user.setBalance(user.getBalance() - price);
             userRepository.save(user);
             postRepository.save(post);
+
+            userHistoryRepository.save(new UserHistory(null, me.getId(),
+                    UserHistory.UserAction.PAY,
+                    post.getId(),
+                    null,
+                    Date.from(java.time.Instant.now())));
+
         } catch (Exception ex) {
-            txManager.rollback(status);
+            postTxManager.rollback(status);
             throw ex;
         }
-        txManager.commit(status);
+        postTxManager.commit(status);
 
         return new PayResult(user.getBalance(), price);
     }

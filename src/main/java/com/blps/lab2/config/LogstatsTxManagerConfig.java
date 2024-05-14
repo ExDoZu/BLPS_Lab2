@@ -18,9 +18,10 @@ import jakarta.persistence.EntityManagerFactory;
 
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(entityManagerFactoryRef = "userEntityManagerFactory", transactionManagerRef = "userTxManager", basePackages = {
-        "com.blps.lab2.model.repository.user" })
-public class UsersTxManagerConfig {
+@EnableJpaRepositories(entityManagerFactoryRef = "logstatsEntityManagerFactory", 
+                        transactionManagerRef = "logstatsTxManager", 
+                        basePackages = {"com.blps.lab2.model.repository.logstats"})
+public class LogstatsTxManagerConfig {
 
     @Bean(name = "ds2properties")
     @ConfigurationProperties("spring.datasource2")
@@ -34,21 +35,20 @@ public class UsersTxManagerConfig {
         return properties.initializeDataSourceBuilder().build();
     }
 
-    @Bean(name = "userEntityManagerFactory")
+    @Bean(name = "logstatsEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean entityManagerFactoryBean(EntityManagerFactoryBuilder builder,
             @Qualifier("ds2") DataSource dataSource) {
 
         return builder.dataSource(dataSource)
-                .packages("com.blps.lab2.model.beans.user")
-                .persistenceUnit("userPersistenceUnit")
+                .packages("com.blps.lab2.model.beans.logstats")
+                .persistenceUnit("logstatsPersistenceUnit")
                 .build();
     }
 
-    @Bean(name = "userTxManager")
+    @Bean(name = "logstatsTxManager")
     @ConfigurationProperties("spring.jpa")
     public PlatformTransactionManager transactionManager(
-            @Qualifier("userEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
-
+            @Qualifier("logstatsEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }
 }

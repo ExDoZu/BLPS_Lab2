@@ -32,7 +32,7 @@ public class AddressesController {
             String street,
             Integer houseNumber,
             Character houseLetter) {
-
+        //TODO logstats
         if (!addressValidationService.checkAddressParams(city, street, houseNumber, houseLetter)) {
             return ResponseEntity.badRequest().build();
         }

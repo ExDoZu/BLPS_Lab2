@@ -1,5 +1,6 @@
 package com.blps.lab2.model.services;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.domain.Pageable;
@@ -14,10 +15,12 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.NotFoundException;
+import com.blps.lab2.model.beans.logstats.ModerHistory;
 import com.blps.lab2.model.beans.post.Post;
-import com.blps.lab2.model.beans.user.User;
+import com.blps.lab2.model.beans.post.User;
+import com.blps.lab2.model.repository.logstats.ModerHistoryRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
-import com.blps.lab2.model.repository.user.UserRepository;
+import com.blps.lab2.model.repository.post.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +29,12 @@ import lombok.RequiredArgsConstructor;
 public class ModerationService {
 
     @Qualifier("postTxManager")
-    PlatformTransactionManager txManager;
+    private final PlatformTransactionManager postTxMangaer;
+
+    @Qualifier("logstatsTxManager")
+    private final PlatformTransactionManager logstatsTxManager;
+
+    private final ModerHistoryRepository moderHistoryRepository;
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -49,15 +57,14 @@ public class ModerationService {
         }
     }
 
-    public ModerationResult getModerationPosts(int page, int size, String moderatorPhone) {
-        User me = userRepository.findByPhoneNumber(moderatorPhone);
-        if (me == null) {
-            throw new AccessDeniedException("User not found");
-        }
+    public ModerationResult getModerationPosts(int page, int size) {
+       
 
-        if (!me.isModerator()) {
-            throw new AccessDeniedException("Not a moderator");
-        }
+        // moderHistoryRepository.save(new ModerHistory(null, me.getId(),
+        //         ModerHistory.ModerAction.GET_POSTS,
+        //         null,
+        //         null,
+        //         Date.from(java.time.Instant.now())));
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> postPage = postRepository.findByArchivedAndApproved(false, null, pageable);
@@ -78,7 +85,7 @@ public class ModerationService {
 
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setName("Approving transaction");
-        TransactionStatus status = txManager.getTransaction(def);
+        TransactionStatus status = postTxMangaer.getTransaction(def);
         try {
             Post post = postRepository.findById(postId).orElse(null);
             if (post == null) {
@@ -86,13 +93,25 @@ public class ModerationService {
             }
             post.setApproved(approved);
             if (approved) {
+                moderHistoryRepository.save(new ModerHistory(null, me.getId(),
+                        ModerHistory.ModerAction.APPROVE,
+                        post.getId(),
+                        null,
+                        Date.from(java.time.Instant.now())));
                 post.setArchived(false);
+            } else {
+                moderHistoryRepository.save(new ModerHistory(null, me.getId(),
+                        ModerHistory.ModerAction.REJECT,
+                        post.getId(),
+                        null,
+                        Date.from(java.time.Instant.now())));
             }
             postRepository.save(post);
+
         } catch (Exception ex) {
-            txManager.rollback(status);
+            postTxMangaer.rollback(status);
             throw ex;
         }
-        txManager.commit(status);
+        postTxMangaer.commit(status);
     }
 }

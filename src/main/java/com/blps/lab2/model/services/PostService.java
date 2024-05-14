@@ -16,14 +16,17 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.InvalidDataException;
 import com.blps.lab2.exceptions.NotFoundException;
+import com.blps.lab2.model.beans.logstats.ModerHistory;
+import com.blps.lab2.model.beans.logstats.UserHistory;
 import com.blps.lab2.model.beans.post.Address;
 import com.blps.lab2.model.beans.post.Metro;
 import com.blps.lab2.model.beans.post.Post;
-import com.blps.lab2.model.beans.user.User;
+import com.blps.lab2.model.beans.post.User;
+import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.AddressRepository;
 import com.blps.lab2.model.repository.post.MetroRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
-import com.blps.lab2.model.repository.user.UserRepository;
+import com.blps.lab2.model.repository.post.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,9 +40,10 @@ public class PostService {
 
     private final MetroValidationService metroValidationService;
     private final PostValidationService postValidationService;
-
     @Qualifier("postTxManager")
-    private final PlatformTransactionManager ptm;
+    private final PlatformTransactionManager txManager;
+
+    private final UserHistoryRepository userHistoryRepository;
 
     public Post post(String phone, Long addressID, Long metroID, Post post)
             throws InvalidDataException, NotFoundException, AccessDeniedException {
@@ -47,45 +51,65 @@ public class PostService {
         if (user == null) {
             throw new InvalidDataException("User not found");
         }
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setName("Post new/edit transaction");
+        TransactionStatus status = txManager.getTransaction(def);
+        Post savedPost;
+        try {
+            boolean edit = false;
+            if (post.getId() != null) {
+                edit = true;
+                savedPost = postRepository.findById(post.getId()).orElse(null);
 
-        if (post.getId() != null) {
-            Post savedPost = postRepository.findById(post.getId()).orElse(null);
+                if (savedPost == null)
+                    throw new NotFoundException("Post not found");
 
-            if (savedPost == null)
-                throw new NotFoundException("Post not found");
+                if (savedPost.getUser().getId() != user.getId())
+                    throw new AccessDeniedException("You can't edit this post. It's not yours");
 
-            if (savedPost.getUser().getId() != user.getId())
-                throw new AccessDeniedException("You can't edit this post. It's not yours");
+                post.setPaidUntil(savedPost.getPaidUntil());
 
-            post.setPaidUntil(savedPost.getPaidUntil());
+            }
+
+            Address address = addressRepository.findById(addressID).orElse(null);
+            if (address == null) {
+                throw new InvalidDataException("Address not found");
+            }
+            Metro metro = null;
+            if (metroID != null)
+                metro = metroRepository.findById(metroID).orElse(null);
+
+            // Validation of metro
+            if (metro != null && !metroValidationService.checkMetroAddress(metro, address)) {
+                throw new InvalidDataException("Invalid metro address");
+            }
+
+            post.setUser(user);
+            post.setAddress(address);
+            post.setMetro(metro);
+
+            // add additional fields
+            post.setCreationDate(Date.from(java.time.Instant.now()));
+            post.setArchived(false);
+
+            if (!postValidationService.checkPost(post)) {
+                throw new InvalidDataException("Invalid post data");
+            }
+
+            savedPost = postRepository.save(post);
+
+            userHistoryRepository.save(new UserHistory(null, user.getId(),
+                    edit ? UserHistory.UserAction.EDIT : UserHistory.UserAction.CREATE,
+                    savedPost.getId(),
+                    null,
+                    Date.from(java.time.Instant.now())));
+
+        } catch (Exception ex) {
+            txManager.rollback(status);
+            throw ex;
         }
+        txManager.commit(status);
 
-        Address address = addressRepository.findById(addressID).orElse(null);
-        if (address == null) {
-            throw new InvalidDataException("Address not found");
-        }
-        Metro metro = null;
-        if (metroID != null)
-            metro = metroRepository.findById(metroID).orElse(null);
-
-        // Validation of metro
-        if (metro != null && !metroValidationService.checkMetroAddress(metro, address)) {
-            throw new InvalidDataException("Invalid metro address");
-        }
-
-        post.setUser(user);
-        post.setAddress(address);
-        post.setMetro(metro);
-
-        // add additional fields
-        post.setCreationDate(Date.from(java.time.Instant.now()));
-        post.setArchived(false);
-
-        if (!postValidationService.checkPost(post)) {
-            throw new InvalidDataException("Invalid post data");
-        }
-
-        Post savedPost = postRepository.save(post);
         return savedPost;
 
     }
@@ -95,15 +119,31 @@ public class PostService {
         if (me == null)
             throw new AccessDeniedException("Invalid token. User not found");
 
-        Post post = postRepository.findById(postId).orElse(null);
-        if (post == null)
-            throw new NotFoundException("Post not found");
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setName("Post delete transaction");
+        TransactionStatus status = txManager.getTransaction(def);
+        Post post;
+        try {
+            post = postRepository.findById(postId).orElse(null);
+            if (post == null)
+                throw new NotFoundException("Post not found");
 
-        if (me.getId() != post.getUser().getId())
-            throw new AccessDeniedException("You can't delete this post. It's not yours");
+            if (me.getId() != post.getUser().getId())
+                throw new AccessDeniedException("You can't delete this post. It's not yours");
 
-        post.setArchived(true);
-        postRepository.save(post);
+            post.setArchived(true);
+            post = postRepository.save(post);
+            userHistoryRepository.save(new UserHistory(null, me.getId(),
+                    UserHistory.UserAction.ARCHIVE,
+                    post.getId(),
+                    null,
+                    Date.from(java.time.Instant.now())));
+        } catch (Exception ex) {
+            txManager.rollback(status);
+            throw ex;
+        }
+        txManager.commit(status);
+
     }
 
     public class GetResult {
@@ -138,21 +178,14 @@ public class PostService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("Getting posts transaction");
-        TransactionStatus status = ptm.getTransaction(def);
         Page<Post> postPage;
-        try {
-            postPage = postRepository.findByMany(city, street, houseNumber, houseLetter, minArea, maxArea,
-                    minPrice,
-                    maxPrice, roomNumber, minFloor, maxFloor, stationName, branchNumber, pageable);
-            System.out.println("we are in tx");
-        } catch (Exception ex) {
-            ptm.rollback(status);
-            throw ex;
-        }
-        ptm.commit(status);
+
+        postPage = postRepository.findByMany(city, street, houseNumber, houseLetter, minArea, maxArea,
+                minPrice,
+                maxPrice, roomNumber, minFloor, maxFloor, stationName, branchNumber, pageable);
+
         List<Post> posts = postPage.getContent();
+        //TODO logstats
 
         return new GetResult(posts, postPage.getTotalPages());
     }
