@@ -1,0 +1,38 @@
+services:
+  client-backend:
+    image: blps2:0.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "13400:13400"
+    depends_on:
+      - service-db1
+      - service-db2
+
+  service-db1:
+    image: postgres:latest
+    volumes:
+      - db1-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: db1
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  service-db2:
+    image: postgres:latest
+    volumes:
+      - db2-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: db2
+    ports:
+      - "5431:5432"
+    restart: unless-stopped
+volumes:
+  db1-data:
+  db2-data:
