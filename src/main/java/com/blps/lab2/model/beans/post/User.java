@@ -2,7 +2,6 @@ package com.blps.lab2.model.beans.post;
 
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -59,8 +58,18 @@ public class User implements UserDetails {
 
         }
         authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        System.out.println(authorities);
         return authorities;
+    }
+
+    // for jaas
+    public Set<String> getRoles() {
+        Set<String> roles = new HashSet<String>();
+        if (isModerator) {
+            roles.add("ROLE_MODERATOR");
+
+        }
+        roles.add("ROLE_USER");
+        return roles;
     }
 
     @Override

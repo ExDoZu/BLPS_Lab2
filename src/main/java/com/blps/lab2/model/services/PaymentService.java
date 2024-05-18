@@ -10,7 +10,6 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.PaymentException;
-import com.blps.lab2.model.beans.logstats.ModerHistory;
 import com.blps.lab2.model.beans.logstats.UserHistory;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
@@ -54,10 +53,7 @@ public class PaymentService {
     final double PRICE_PER_DAY = 100;
 
     public PayResult pay(Date date, Long postId, String userPhone) throws AccessDeniedException, PaymentException {
-        final User me = userRepository.findByPhoneNumber(userPhone);
-        if (me == null) {
-            throw new AccessDeniedException("No such user");
-        }
+        
 
         final Date currentDateTime = Date.from(java.time.Instant.now());
 
@@ -70,10 +66,11 @@ public class PaymentService {
 
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setName("Payment transaction");
-
         TransactionStatus status = postTxManager.getTransaction(def);
+        
         User user;
         try {
+            final User me = userRepository.findByPhoneNumber(userPhone);
             Post post = postRepository.findById(postId).orElse(null);
             user = post.getUser();
 
@@ -98,9 +95,10 @@ public class PaymentService {
                     UserHistory.UserAction.PAY,
                     post.getId(),
                     null,
-                    Date.from(java.time.Instant.now())));
+                    currentDateTime));
 
         } catch (Exception ex) {
+           
             postTxManager.rollback(status);
             throw ex;
         }

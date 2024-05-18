@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @RequiredArgsConstructor
 public class ReceivePayment {
-    private Long postId;
+    private long postId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd.MM.yyyy")
     private Date paidUntil;
 }

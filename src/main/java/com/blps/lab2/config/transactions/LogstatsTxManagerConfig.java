@@ -1,4 +1,4 @@
-package com.blps.lab2.config;
+package com.blps.lab2.config.transactions;
 
 import javax.sql.DataSource;
 

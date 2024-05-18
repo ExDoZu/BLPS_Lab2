@@ -1,4 +1,4 @@
-package com.blps.lab2.config;
+package com.blps.lab2.config.transactions;
 
 import javax.sql.DataSource;
 
@@ -19,7 +19,10 @@ import jakarta.persistence.EntityManagerFactory;
 
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(entityManagerFactoryRef = "postEntityManagerFactory", transactionManagerRef = "postTxManager", basePackages = {
+@EnableJpaRepositories(
+    entityManagerFactoryRef = "postEntityManagerFactory", 
+    transactionManagerRef = "postTxManager", 
+    basePackages = {
         "com.blps.lab2.model.repository.post" })
 public class PostTxManagerConfig {
 

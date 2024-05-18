@@ -31,9 +31,6 @@ public class ModerationService {
     @Qualifier("postTxManager")
     private final PlatformTransactionManager postTxMangaer;
 
-    @Qualifier("logstatsTxManager")
-    private final PlatformTransactionManager logstatsTxManager;
-
     private final ModerHistoryRepository moderHistoryRepository;
 
     private final PostRepository postRepository;
@@ -57,36 +54,22 @@ public class ModerationService {
         }
     }
 
-    public ModerationResult getModerationPosts(int page, int size) {
-       
-
-        // moderHistoryRepository.save(new ModerHistory(null, me.getId(),
-        //         ModerHistory.ModerAction.GET_POSTS,
-        //         null,
-        //         null,
-        //         Date.from(java.time.Instant.now())));
-
+    public ModerationResult getModerationPosts(int page, int size) { 
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> postPage = postRepository.findByArchivedAndApproved(false, null, pageable);
         List<Post> posts = postPage.getContent();
-
         return new ModerationResult(posts, postPage.getTotalPages());
     }
 
     public void approve(long postId, String moderatorPhone, boolean approved)
             throws AccessDeniedException, NotFoundException {
-        User me = userRepository.findByPhoneNumber(moderatorPhone);
-        if (me == null) {
-            throw new AccessDeniedException("User not found");
-        }
-        if (!me.isModerator()) {
-            throw new AccessDeniedException("Not a moderator");
-        }
-
+        
+        
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setName("Approving transaction");
         TransactionStatus status = postTxMangaer.getTransaction(def);
         try {
+            User me = userRepository.findByPhoneNumber(moderatorPhone);
             Post post = postRepository.findById(postId).orElse(null);
             if (post == null) {
                 throw new NotFoundException("Post not found");

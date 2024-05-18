@@ -6,6 +6,8 @@ import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,6 +23,7 @@ public class UserHistory {
     public enum UserAction {
         CREATE,
         ADD_PHOTO,
+        GET_PHOTO,
         PAY,
         ARCHIVE,
         GET_POSTS,
@@ -40,6 +43,7 @@ public class UserHistory {
     private Long userID;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private UserAction action;
 
     private Long interacted_post;

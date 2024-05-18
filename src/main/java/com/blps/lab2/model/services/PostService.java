@@ -16,8 +16,9 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.InvalidDataException;
 import com.blps.lab2.exceptions.NotFoundException;
-import com.blps.lab2.model.beans.logstats.ModerHistory;
+
 import com.blps.lab2.model.beans.logstats.UserHistory;
+import com.blps.lab2.model.beans.logstats.UserHistory.UserAction;
 import com.blps.lab2.model.beans.post.Address;
 import com.blps.lab2.model.beans.post.Metro;
 import com.blps.lab2.model.beans.post.Post;
@@ -47,15 +48,14 @@ public class PostService {
 
     public Post post(String phone, Long addressID, Long metroID, Post post)
             throws InvalidDataException, NotFoundException, AccessDeniedException {
-        User user = userRepository.findByPhoneNumber(phone);
-        if (user == null) {
-            throw new InvalidDataException("User not found");
-        }
+
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setName("Post new/edit transaction");
         TransactionStatus status = txManager.getTransaction(def);
+
         Post savedPost;
         try {
+            User user = userRepository.findByPhoneNumber(phone);
             boolean edit = false;
             if (post.getId() != null) {
                 edit = true;
@@ -79,7 +79,7 @@ public class PostService {
             if (metroID != null)
                 metro = metroRepository.findById(metroID).orElse(null);
 
-            // Validation of metro
+            
             if (metro != null && !metroValidationService.checkMetroAddress(metro, address)) {
                 throw new InvalidDataException("Invalid metro address");
             }
@@ -88,7 +88,7 @@ public class PostService {
             post.setAddress(address);
             post.setMetro(metro);
 
-            // add additional fields
+            
             post.setCreationDate(Date.from(java.time.Instant.now()));
             post.setArchived(false);
 
@@ -115,15 +115,14 @@ public class PostService {
     }
 
     public void delete(long postId, String userPhone) throws NotFoundException, AccessDeniedException {
-        User me = userRepository.findByPhoneNumber(userPhone);
-        if (me == null)
-            throw new AccessDeniedException("Invalid token. User not found");
 
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setName("Post delete transaction");
         TransactionStatus status = txManager.getTransaction(def);
+
         Post post;
         try {
+            User me = userRepository.findByPhoneNumber(userPhone);
             post = postRepository.findById(postId).orElse(null);
             if (post == null)
                 throw new NotFoundException("Post not found");
@@ -165,8 +164,30 @@ public class PostService {
     }
 
     public GetResult getByUserPhoneNumber(String phoneNumber, int page, int size) {
+
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setName("get posts by phone number");
+        TransactionStatus status = txManager.getTransaction(def);
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<Post> postPage = postRepository.findByUser_PhoneNumber(phoneNumber, pageable);
+        Page<Post> postPage;
+        try {
+            postPage = postRepository.findByUser_PhoneNumber(phoneNumber, pageable);
+
+            final User user = userRepository.findByPhoneNumber(phoneNumber);
+            userHistoryRepository.save(new UserHistory(null,
+                    user.getId(),
+                    UserAction.GET_POSTS,
+                    null,
+                    "as owner",
+                    Date.from(java.time.Instant.now())));
+
+        } catch (Exception ex) {
+            txManager.rollback(status);
+            throw ex;
+        }
+        txManager.commit(status);
+
         return new GetResult(postPage.getContent(), postPage.getTotalPages());
     }
 
@@ -185,7 +206,6 @@ public class PostService {
                 maxPrice, roomNumber, minFloor, maxFloor, stationName, branchNumber, pageable);
 
         List<Post> posts = postPage.getContent();
-        //TODO logstats
 
         return new GetResult(posts, postPage.getTotalPages());
     }

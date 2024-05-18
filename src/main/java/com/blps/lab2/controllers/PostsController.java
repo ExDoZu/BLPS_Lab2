@@ -8,13 +8,14 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,8 +26,11 @@ import com.blps.lab2.controllers.dto.ResponseSimplePost;
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.InvalidDataException;
 import com.blps.lab2.exceptions.NotFoundException;
+import com.blps.lab2.model.beans.logstats.UserHistory;
+import com.blps.lab2.model.beans.logstats.UserHistory.UserAction;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
+import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.PostService;
@@ -44,21 +48,15 @@ public class PostsController {
     private final PostService postService;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final UserHistoryRepository userHistoryRepository;
 
     @DeleteMapping("/posts")
     public ResponseEntity<?> archivePost(
-            @RequestHeader("authorization") String token,
+            Authentication auth,
             long postId) {
 
-        String phone;
         try {
-            phone = token.split(":")[0];
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Invalid token");
-        }
-
-        try {
-            postService.delete(postId, phone);
+            postService.delete(postId, auth.getName());
         } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (AccessDeniedException e) {
@@ -75,17 +73,11 @@ public class PostsController {
     public ResponseEntity<?> getMethodName(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestHeader("authorization") String token) {
+            Authentication auth) {
         if (size <= 0)
             return ResponseEntity.badRequest().body("Invalid page size");
-        String phone;
-        try {
-            phone = token.split(":")[0];
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Invalid token");
-        }
 
-        GetResult getResult = postService.getByUserPhoneNumber(phone, page, size);
+        GetResult getResult = postService.getByUserPhoneNumber(auth.getName(), page, size);
 
         if (page >= getResult.getTotalPages())
             return ResponseEntity.badRequest().body("No such page");
@@ -105,21 +97,12 @@ public class PostsController {
     @PostMapping("/posts")
     public ResponseEntity<?> setPost(
             @RequestBody ReceivePost entity,
-            @RequestHeader("authorization") String token) {
-
-        String phone;
-        try {
-            phone = token.split(":")[0];
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Invalid token");
-        }
-        Long addressID = entity.getAddressId();
-        Long metroID = entity.getMetroId();
-        Post post = entity.toPostNoFK();
+            Authentication auth) {
 
         Post savedPost;
         try {
-            savedPost = postService.post(phone, addressID, metroID, post);
+            savedPost = postService.post(auth.getName(), entity.getAddressId(), entity.getMetroId(),
+                    entity.toPostNoFK());
         } catch (NotFoundException e) {
             return new ResponseEntity<>("Post not found", HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -134,14 +117,7 @@ public class PostsController {
     public ResponseEntity<?> updatePost(
             @PathVariable long postId,
             @RequestBody ReceivePost entity,
-            @RequestHeader("authorization") String token) {
-
-        String phone;
-        try {
-            phone = token.split(":")[0];
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Invalid token");
-        }
+            Authentication auth) {
 
         Post post = entity.toPostNoFK();
         post.setId(postId);
@@ -150,7 +126,7 @@ public class PostsController {
 
         Post newPost;
         try {
-            newPost = postService.post(phone, addressID, metroID, post);
+            newPost = postService.post(auth.getName(), addressID, metroID, post);
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (NotFoundException e) {
@@ -167,35 +143,33 @@ public class PostsController {
     @GetMapping("/posts/{postId}")
     public ResponseEntity<?> getPost(
             @PathVariable("postId") long postId,
-            @RequestHeader("authorization") String token) {
+            Authentication auth) {
 
-        boolean noUser;
-        String phone = "";
-        try {
-            phone = token.split(":")[0];
-            noUser = false;
-        } catch (Exception e) {
-            noUser = true;
-        }
-        //TODO to service. logstats
         Post post = postRepository.findById(postId).orElse(null);
         if (post == null)
             return ResponseEntity.notFound().build();
 
-        if (noUser) {
-            boolean archived = post.getArchived();
-            Boolean approved = post.getApproved();
-            Date paidUntil = post.getPaidUntil();
+        boolean archived = post.getArchived();
+        Boolean approved = post.getApproved();
+        Date paidUntil = post.getPaidUntil();
+        if (auth == null) {
+
             if (!archived && approved && paidUntil != null && paidUntil.after(Date.from(java.time.Instant.now())))
                 return ResponseEntity.ok().body(new ResponsePost(post));
         } else {
-            User me = userRepository.findByPhoneNumber(phone);
-            if (me == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No such user");
-            }
-            if (post.getUser().getId() == me.getId())
+            User me = userRepository.findByPhoneNumber(auth.getName());
+
+            if ((post.getUser().getId() == me.getId()) || (!archived && approved && paidUntil != null
+                    && paidUntil.after(Date.from(java.time.Instant.now())))) {
+
+                userHistoryRepository.save(new UserHistory(null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
+                        null, Date.from(java.time.Instant.now())));
                 return ResponseEntity.ok().body(new ResponsePost(post));
+            }
+            userHistoryRepository.save(new UserHistory(null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
+                    "Access denied", Date.from(java.time.Instant.now())));
         }
+
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
     }
@@ -216,7 +190,8 @@ public class PostsController {
             Integer minFloor,
             Integer maxFloor,
             String stationName,
-            Integer branchNumber) {
+            Integer branchNumber,
+            Authentication auth) {
 
         GetResult getResult = postService.getByFilterParams(
                 page, size, city,
@@ -228,6 +203,12 @@ public class PostsController {
         List<ResponseSimplePost> responsePosts = new ArrayList<>();
         for (Post post : getResult.getPosts()) {
             responsePosts.add(new ResponseSimplePost(post));
+        }
+
+        if (auth != null) {
+            User user = userRepository.findByPhoneNumber(auth.getName());
+            userHistoryRepository.save(new UserHistory(null, user.getId(), UserAction.GET_POSTS, null, null,
+                    Date.from(java.time.Instant.now())));
         }
 
         if (page >= getResult.getTotalPages())

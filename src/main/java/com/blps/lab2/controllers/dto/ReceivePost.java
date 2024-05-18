@@ -2,6 +2,7 @@ package com.blps.lab2.controllers.dto;
 
 import com.blps.lab2.model.beans.post.Post;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @RequiredArgsConstructor
@@ -12,22 +13,22 @@ public class ReceivePost {
     private String[] pathsToPhotos;
 
     // Flat fields
-
+    @NotBlank
     private String title;
-
+    @NotBlank
     private String description;
 
-    private Double price;
+    private double price;
 
-    private Integer roomNumber;
+    private int roomNumber;
 
-    private Double area;
+    private double area;
 
-    private Integer floor;
+    private int floor;
 
-    private Long addressId;
+    private long addressId;
 
-    private Long metroId;
+    private long metroId;
 
     @Override
     public String toString() {
