@@ -9,9 +9,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 
 import com.blps.lab2.model.beans.post.User;
 import com.blps.lab2.model.repository.post.UserRepository;
@@ -20,8 +17,6 @@ import com.blps.lab2.model.repository.post.UserRepository;
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
-
-    private final KafkaHandlingService kafkaHandlingService;
 
     @Autowired
     private UserRepository userRepository;
@@ -32,7 +27,6 @@ public class UserService implements UserDetailsService {
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("User: " + username);
-        kafkaHandlingService.send(topicName, "User: ", username);
 
         User user = userRepository.findByPhoneNumber(username);
         if (user == null)

@@ -1,8 +1,6 @@
 package com.blps.lab2.model.services;
 
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
@@ -16,17 +14,16 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import com.blps.lab2.config.kafka.*;
 
 @Slf4j
 @Service
 @AllArgsConstructor
-public class KafkaHandlingService {
+public class KafkaService {
 
-    private final Producer<String, String> kafkaProducer;
+    private final Producer<String, Object> kafkaProducer;
     private final Admin admin;
     private final List<NewTopic> topics;
 
@@ -48,7 +45,7 @@ public class KafkaHandlingService {
         }
     }
 
-    public void send(String topicName, String key, String value) {
+    public void send(String topicName, String key, Object value) {
         try {
             kafkaProducer.send(new ProducerRecord<>(topicName, key, value));
             log.info("Message sent to topic '{}': key = '{}', value = '{}'", topicName, key, value);

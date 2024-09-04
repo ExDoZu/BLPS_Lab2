@@ -21,7 +21,7 @@ services:
       - "13401:13401"
     depends_on:
       # - service-db1
-      # - service-db2
+      - service-db2
       - kafka
 
   zookeeper:
