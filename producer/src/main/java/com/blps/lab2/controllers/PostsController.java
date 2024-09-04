@@ -26,11 +26,11 @@ import com.blps.lab2.controllers.dto.ResponseSimplePost;
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.InvalidDataException;
 import com.blps.lab2.exceptions.NotFoundException;
-import com.blps.lab2.model.beans.logstats.UserHistory;
-import com.blps.lab2.model.beans.logstats.UserHistory.UserAction;
+import com.blps.common.UserHistoryDto;
+import com.blps.common.UserHistoryDto.UserAction;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
-import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
+//import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.PostService;
@@ -48,7 +48,7 @@ public class PostsController {
     private final PostService postService;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-    private final UserHistoryRepository userHistoryRepository;
+//    private final UserHistoryRepository userHistoryRepository;
 
     @DeleteMapping("/posts")
     public ResponseEntity<?> archivePost(
@@ -162,12 +162,12 @@ public class PostsController {
             if ((post.getUser().getId() == me.getId()) || (!archived && approved && paidUntil != null
                     && paidUntil.after(Date.from(java.time.Instant.now())))) {
 
-                userHistoryRepository.save(new UserHistory(null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
-                        null, Date.from(java.time.Instant.now())));
+//                userHistoryRepository.save(new UserHistoryDto(null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
+//                        null, Date.from(java.time.Instant.now())));
                 return ResponseEntity.ok().body(new ResponsePost(post));
             }
-            userHistoryRepository.save(new UserHistory(null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
-                    "Access denied", Date.from(java.time.Instant.now())));
+//            userHistoryRepository.save(new UserHistoryDto(null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
+//                    "Access denied", Date.from(java.time.Instant.now())));
         }
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -207,8 +207,8 @@ public class PostsController {
 
         if (auth != null) {
             User user = userRepository.findByPhoneNumber(auth.getName());
-            userHistoryRepository.save(new UserHistory(null, user.getId(), UserAction.GET_POSTS, null, null,
-                    Date.from(java.time.Instant.now())));
+//            userHistoryRepository.save(new UserHistoryDto(null, user.getId(), UserAction.GET_POSTS, null, null,
+//                    Date.from(java.time.Instant.now())));
         }
 
         if (page >= getResult.getTotalPages())

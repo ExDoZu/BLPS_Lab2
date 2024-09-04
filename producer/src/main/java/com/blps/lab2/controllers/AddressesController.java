@@ -6,12 +6,12 @@ import java.util.List;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.blps.lab2.model.beans.logstats.UserHistory;
-import com.blps.lab2.model.beans.logstats.UserHistory.UserAction;
+import com.blps.common.UserHistoryDto;
+import com.blps.common.UserHistoryDto.UserAction;
 import com.blps.lab2.model.beans.post.Address;
 import com.blps.lab2.model.beans.post.Metro;
 import com.blps.lab2.model.beans.post.User;
-import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
+//import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.AddressRepository;
 import com.blps.lab2.model.repository.post.MetroRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
@@ -32,7 +32,7 @@ public class AddressesController {
     private final AddressRepository addressRepository;
     private final MetroRepository metroRepository;
     private final UserRepository userRepository;
-    private final UserHistoryRepository userHistoryRepository;
+//    private final UserHistoryRepository userHistoryRepository;
 
     private final AddressValidationService addressValidationService;
 
@@ -56,12 +56,12 @@ public class AddressesController {
 
         if (auth != null) {
             User user = userRepository.findByPhoneNumber(auth.getName());
-            userHistoryRepository.save(new UserHistory(null, user.getId(), UserAction.GET_ADDRESSES, null,
-                    (city + " " +
-                            (street == null ? "" : street) + " " +
-                            (houseNumber == null ? "" : houseNumber.toString()) + " " +
-                            (houseLetter == null ? "" : houseLetter)),
-                    Date.from(java.time.Instant.now())));
+//            userHistoryRepository.save(new UserHistoryDto(null, user.getId(), UserAction.GET_ADDRESSES, null,
+//                    (city + " " +
+//                            (street == null ? "" : street) + " " +
+//                            (houseNumber == null ? "" : houseNumber.toString()) + " " +
+//                            (houseLetter == null ? "" : houseLetter)),
+//                    Date.from(java.time.Instant.now())));
         }
 
         var response = new HashMap<String, Object>();

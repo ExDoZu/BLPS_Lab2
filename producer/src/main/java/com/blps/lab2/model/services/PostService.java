@@ -17,13 +17,13 @@ import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.InvalidDataException;
 import com.blps.lab2.exceptions.NotFoundException;
 
-import com.blps.lab2.model.beans.logstats.UserHistory;
-import com.blps.lab2.model.beans.logstats.UserHistory.UserAction;
+//import com.blps.common.UserHistory;
+//import com.blps.common.UserHistory.UserAction;
 import com.blps.lab2.model.beans.post.Address;
 import com.blps.lab2.model.beans.post.Metro;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
-import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
+//import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.AddressRepository;
 import com.blps.lab2.model.repository.post.MetroRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
@@ -44,7 +44,7 @@ public class PostService {
     @Qualifier("postTxManager")
     private final PlatformTransactionManager txManager;
 
-    private final UserHistoryRepository userHistoryRepository;
+//    private final UserHistoryRepository userHistoryRepository;
 
     public Post post(String phone, Long addressID, Long metroID, Post post)
             throws InvalidDataException, NotFoundException, AccessDeniedException {
@@ -98,11 +98,11 @@ public class PostService {
 
             savedPost = postRepository.save(post);
 
-            userHistoryRepository.save(new UserHistory(null, user.getId(),
-                    edit ? UserHistory.UserAction.EDIT : UserHistory.UserAction.CREATE,
-                    savedPost.getId(),
-                    null,
-                    Date.from(java.time.Instant.now())));
+//            userHistoryRepository.save(new UserHistory(null, user.getId(),
+//                    edit ? UserHistory.UserAction.EDIT : UserHistory.UserAction.CREATE,
+//                    savedPost.getId(),
+//                    null,
+//                    Date.from(java.time.Instant.now())));
 
         } catch (Exception ex) {
             txManager.rollback(status);
@@ -132,11 +132,11 @@ public class PostService {
 
             post.setArchived(true);
             post = postRepository.save(post);
-            userHistoryRepository.save(new UserHistory(null, me.getId(),
-                    UserHistory.UserAction.ARCHIVE,
-                    post.getId(),
-                    null,
-                    Date.from(java.time.Instant.now())));
+//            userHistoryRepository.save(new UserHistory(null, me.getId(),
+//                    UserHistory.UserAction.ARCHIVE,
+//                    post.getId(),
+//                    null,
+//                    Date.from(java.time.Instant.now())));
         } catch (Exception ex) {
             txManager.rollback(status);
             throw ex;
@@ -175,12 +175,12 @@ public class PostService {
             postPage = postRepository.findByUser_PhoneNumber(phoneNumber, pageable);
 
             final User user = userRepository.findByPhoneNumber(phoneNumber);
-            userHistoryRepository.save(new UserHistory(null,
-                    user.getId(),
-                    UserAction.GET_POSTS,
-                    null,
-                    "as owner",
-                    Date.from(java.time.Instant.now())));
+//            userHistoryRepository.save(new UserHistory(null,
+//                    user.getId(),
+//                    UserAction.GET_POSTS,
+//                    null,
+//                    "as owner",
+//                    Date.from(java.time.Instant.now())));
 
         } catch (Exception ex) {
             txManager.rollback(status);

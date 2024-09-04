@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.blps.lab2.model.beans.logstats.UserHistory;
-import com.blps.lab2.model.beans.logstats.UserHistory.UserAction;
+import com.blps.common.UserHistoryDto;
+import com.blps.common.UserHistoryDto.UserAction;
 import com.blps.lab2.model.beans.post.User;
 import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.PictureService;
@@ -46,7 +46,7 @@ public class PicturesController {
         }
         if (auth != null) {
             User user = userRepository.findByPhoneNumber(auth.getName());
-            UserHistory userHistory = new UserHistory(null, user.getId(), UserAction.GET_PHOTO, null, name,
+            UserHistoryDto userHistory = new UserHistoryDto(null, user.getId(), UserAction.GET_PHOTO, null, name,
                     Date.from(java.time.Instant.now()));
             KafkaService.send("user_audit", user.getId().toString(), userHistory);
         }
@@ -70,7 +70,7 @@ public class PicturesController {
             return ResponseEntity.internalServerError().body("Failed to upload file");
         }
         User user = userRepository.findByPhoneNumber(auth.getName());
-        UserHistory userHistory = new UserHistory(null, user.getId(), UserAction.ADD_PHOTO, null, newFileName,
+        UserHistoryDto userHistory = new UserHistoryDto(null, user.getId(), UserAction.ADD_PHOTO, null, newFileName,
                 Date.from(java.time.Instant.now()));
         KafkaService.send("user_audit", user.getId().toString(), userHistory);
 

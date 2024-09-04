@@ -1,17 +1,9 @@
-package com.blps.consumer.model.beans.logstats;
+package com.blps.common;
 
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 
 @Entity
 @Getter
@@ -19,7 +11,7 @@ import jakarta.persistence.SequenceGenerator;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserHistory {
+public class UserHistoryDto {
     public enum UserAction {
         CREATE,
         ADD_PHOTO,
