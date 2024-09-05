@@ -31,7 +31,7 @@ import org.springframework.http.MediaType;
 public class PicturesController {
     private final PictureService pictureService;
     private final UserRepository userRepository;
-    private final KafkaService KafkaService;
+    private final KafkaService kafkaService;
 
     @GetMapping("/pictures/{name}")
     public ResponseEntity<?> getMethodName(
@@ -44,12 +44,20 @@ public class PicturesController {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Failed to get picture");
         }
+        Long userId = 0L;
         if (auth != null) {
             User user = userRepository.findByPhoneNumber(auth.getName());
-            UserHistoryDto userHistory = new UserHistoryDto(null, user.getId(), UserAction.GET_PHOTO, null, name,
-                    Date.from(java.time.Instant.now()));
-            KafkaService.send("user_audit", user.getId().toString(), userHistory);
+            if (user != null) {
+                userId = user.getId();
+            }
         }
+
+        UserHistoryDto userHistory = new UserHistoryDto(
+          null, userId, UserAction.GET_PHOTO, null, 
+          name, Date.from(java.time.Instant.now())
+        );
+        kafkaService.send("user_audit", userId.toString(), userHistory);
+        
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(result.getMimeType()))
                 .body(result.getImageBytes());
     }
@@ -72,7 +80,7 @@ public class PicturesController {
         User user = userRepository.findByPhoneNumber(auth.getName());
         UserHistoryDto userHistory = new UserHistoryDto(null, user.getId(), UserAction.ADD_PHOTO, null, newFileName,
                 Date.from(java.time.Instant.now()));
-        KafkaService.send("user_audit", user.getId().toString(), userHistory);
+        kafkaService.send("user_audit", user.getId().toString(), userHistory);
 
         URI location = URI.create("/pictures/" + newFileName);
         return ResponseEntity.created(location).build();

@@ -30,11 +30,11 @@ import com.blps.common.UserHistoryDto;
 import com.blps.common.UserHistoryDto.UserAction;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
-//import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.PostService;
 import com.blps.lab2.model.services.PostService.GetResult;
+import com.blps.lab2.model.services.KafkaService;
 
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +48,7 @@ public class PostsController {
     private final PostService postService;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-//    private final UserHistoryRepository userHistoryRepository;
+    private final KafkaService kafkaService;
 
     @DeleteMapping("/posts")
     public ResponseEntity<?> archivePost(
@@ -161,13 +161,19 @@ public class PostsController {
 
             if ((post.getUser().getId() == me.getId()) || (!archived && approved && paidUntil != null
                     && paidUntil.after(Date.from(java.time.Instant.now())))) {
+                UserHistoryDto userHistory = new UserHistoryDto(
+                        null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
+                        null, Date.from(java.time.Instant.now())
+                );
+                kafkaService.send("user_audit", me.getId().toString(), userHistory);
 
-//                userHistoryRepository.save(new UserHistoryDto(null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
-//                        null, Date.from(java.time.Instant.now())));
                 return ResponseEntity.ok().body(new ResponsePost(post));
             }
-//            userHistoryRepository.save(new UserHistoryDto(null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
-//                    "Access denied", Date.from(java.time.Instant.now())));
+            UserHistoryDto userHistory = new UserHistoryDto(
+                    null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
+                    "Access denied", Date.from(java.time.Instant.now())
+            );
+            kafkaService.send("user_audit", me.getId().toString(), userHistory);
         }
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -205,12 +211,19 @@ public class PostsController {
             responsePosts.add(new ResponseSimplePost(post));
         }
 
+        Long userId = 0L;
         if (auth != null) {
             User user = userRepository.findByPhoneNumber(auth.getName());
-//            userHistoryRepository.save(new UserHistoryDto(null, user.getId(), UserAction.GET_POSTS, null, null,
-//                    Date.from(java.time.Instant.now())));
+            if (user != null) {
+                userId = user.getId();
+            }
         }
-
+        UserHistoryDto userHistory = new UserHistoryDto(
+                null, userId, UserAction.GET_POSTS, null,
+                null, Date.from(java.time.Instant.now())
+        );
+        kafkaService.send("user_audit", userId.toString(), userHistory);
+        
         if (page >= getResult.getTotalPages())
             return ResponseEntity.badRequest().body("No such page");
         var response = new HashMap<String, Object>();

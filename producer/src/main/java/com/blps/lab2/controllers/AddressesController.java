@@ -11,11 +11,11 @@ import com.blps.common.UserHistoryDto.UserAction;
 import com.blps.lab2.model.beans.post.Address;
 import com.blps.lab2.model.beans.post.Metro;
 import com.blps.lab2.model.beans.post.User;
-//import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.AddressRepository;
 import com.blps.lab2.model.repository.post.MetroRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.AddressValidationService;
+import com.blps.lab2.model.services.KafkaService;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +32,8 @@ public class AddressesController {
     private final AddressRepository addressRepository;
     private final MetroRepository metroRepository;
     private final UserRepository userRepository;
-//    private final UserHistoryRepository userHistoryRepository;
-
     private final AddressValidationService addressValidationService;
+    private final KafkaService kafkaService;
 
     @GetMapping("/addresses")
     public ResponseEntity<?> getAddresses(
@@ -56,12 +55,21 @@ public class AddressesController {
 
         if (auth != null) {
             User user = userRepository.findByPhoneNumber(auth.getName());
-//            userHistoryRepository.save(new UserHistoryDto(null, user.getId(), UserAction.GET_ADDRESSES, null,
-//                    (city + " " +
-//                            (street == null ? "" : street) + " " +
-//                            (houseNumber == null ? "" : houseNumber.toString()) + " " +
-//                            (houseLetter == null ? "" : houseLetter)),
-//                    Date.from(java.time.Instant.now())));
+            String searchDetails = city + " " +
+                    (street == null ? "" : street) + " " +
+                    (houseNumber == null ? "" : houseNumber.toString()) + " " +
+                    (houseLetter == null ? "" : houseLetter);
+            
+            UserHistoryDto userHistory = new UserHistoryDto(
+                null, 
+                user.getId(), 
+                UserAction.GET_ADDRESSES, 
+                null, 
+                searchDetails, 
+                Date.from(java.time.Instant.now())
+            );
+            
+            kafkaService.send("user_audit", user.getId().toString(), userHistory);
         }
 
         var response = new HashMap<String, Object>();

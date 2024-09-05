@@ -10,12 +10,13 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.PaymentException;
-//import com.blps.common.UserHistory;
+import com.blps.common.UserHistoryDto;
+import com.blps.common.UserHistoryDto.UserAction;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
-//import com.blps.lab2.model.repository.logstats.UserHistoryRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
+import com.blps.lab2.model.services.KafkaService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +30,7 @@ public class PaymentService {
     @Qualifier("postTxManager")
     private final PlatformTransactionManager postTxManager;
 
-//    private final UserHistoryRepository userHistoryRepository;
+    private final KafkaService kafkaService;
 
     public class PayResult {
         private double balance;
@@ -91,11 +92,11 @@ public class PaymentService {
             userRepository.save(user);
             postRepository.save(post);
 
-//            userHistoryRepository.save(new UserHistory(null, me.getId(),
-//                    UserHistory.UserAction.PAY,
-//                    post.getId(),
-//                    null,
-//                    currentDateTime));
+            UserHistoryDto userHistory = new UserHistoryDto(
+                null, me.getId(), UserAction.PAY, post.getId(),
+                null, currentDateTime
+            );
+            kafkaService.send("user_audit", me.getId().toString(), userHistory);
 
         } catch (Exception ex) {
            
