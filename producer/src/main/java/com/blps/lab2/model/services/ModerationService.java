@@ -15,12 +15,13 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.NotFoundException;
-import com.blps.lab2.model.beans.logstats.ModerHistory;
+import com.blps.common.ModerHistoryDto;
+import com.blps.common.ModerHistoryDto.ModerAction;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
-import com.blps.lab2.model.repository.logstats.ModerHistoryRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
+import com.blps.lab2.model.services.KafkaService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,10 +32,9 @@ public class ModerationService {
     @Qualifier("postTxManager")
     private final PlatformTransactionManager postTxMangaer;
 
-    private final ModerHistoryRepository moderHistoryRepository;
-
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final KafkaService kafkaService;
 
     public class ModerationResult {
         public List<Post> posts;
@@ -75,19 +75,19 @@ public class ModerationService {
                 throw new NotFoundException("Post not found");
             }
             post.setApproved(approved);
+            ModerAction action = approved ? ModerAction.APPROVE : ModerAction.REJECT;
+
+            ModerHistoryDto moderHistory = new ModerHistoryDto(
+                null, me.getId(),
+                action,
+                post.getId(),
+                null,
+                Date.from(java.time.Instant.now())
+            );
+            kafkaService.send("moder_audit", me.getId().toString(), moderHistory);
+
             if (approved) {
-                moderHistoryRepository.save(new ModerHistory(null, me.getId(),
-                        ModerHistory.ModerAction.APPROVE,
-                        post.getId(),
-                        null,
-                        Date.from(java.time.Instant.now())));
                 post.setArchived(false);
-            } else {
-                moderHistoryRepository.save(new ModerHistory(null, me.getId(),
-                        ModerHistory.ModerAction.REJECT,
-                        post.getId(),
-                        null,
-                        Date.from(java.time.Instant.now())));
             }
             postRepository.save(post);
 

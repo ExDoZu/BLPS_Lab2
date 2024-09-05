@@ -1,4 +1,8 @@
-package com.blps.common;
+package com.blps.consumer.beans;
+
+import lombok.*;
+
+import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,9 +12,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
-import lombok.*;
-
-import java.util.Date;
 
 @Entity
 @Getter
@@ -18,32 +19,26 @@ import java.util.Date;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserHistoryDto {
-    public enum UserAction {
-        CREATE,
-        ADD_PHOTO,
-        GET_PHOTO,
-        PAY,
-        ARCHIVE,
-        GET_POSTS,
-        GET_ONE_POST,
-        GET_ADDRESSES,
-        EDIT,
+public class ModerHistory {
+    public enum ModerAction {
+        APPROVE,
+        REJECT,
         LOGIN,
         REGISTER,
+        GET_POSTS,
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "uh_seq")
-    @SequenceGenerator(name = "uh_seq", sequenceName = "uh_id_sequence")
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "mh_seq")
+    @SequenceGenerator(name = "mh_seq", sequenceName = "mh_id_sequence")
     private Long id;
 
     @Column(nullable = false)
-    private Long userID;
+    private Long moderID;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserAction action;
+    private ModerAction action;
 
     private Long interacted_post;
 

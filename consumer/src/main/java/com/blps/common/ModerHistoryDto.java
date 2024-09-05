@@ -1,4 +1,4 @@
-package com.blps.lab2.model.beans.logstats;
+package com.blps.common;
 
 import lombok.*;
 
@@ -19,7 +19,7 @@ import jakarta.persistence.SequenceGenerator;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class ModerHistory {
+public class ModerHistoryDto {
     public enum ModerAction {
         APPROVE,
         REJECT,

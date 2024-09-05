@@ -13,14 +13,12 @@ import com.blps.lab2.controllers.dto.ReceiveModerationApprovement;
 import com.blps.lab2.controllers.dto.ResponsePost;
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.NotFoundException;
-import com.blps.lab2.model.beans.logstats.ModerHistory;
-import com.blps.lab2.model.beans.logstats.ModerHistory.ModerAction;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
-import com.blps.lab2.model.repository.logstats.ModerHistoryRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.ModerationService;
 import com.blps.lab2.model.services.ModerationService.ModerationResult;
+import com.blps.lab2.model.services.KafkaService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +28,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.blps.common.ModerHistoryDto;
+import com.blps.common.ModerHistoryDto.ModerAction;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
@@ -38,7 +39,7 @@ public class ModerationController {
     private final ModerationService moderationService;
 
     private final UserRepository userRepository;
-    private final ModerHistoryRepository moderHistoryRepository;
+    private final KafkaService kafkaService;
 
     @GetMapping("/moderation")
     public ResponseEntity<?> getModerationPosts(
@@ -56,8 +57,10 @@ public class ModerationController {
         }
 
         User user = userRepository.findByPhoneNumber(auth.getName());
-        moderHistoryRepository.save(new ModerHistory(null, user.getId(), ModerAction.GET_POSTS, null, null,
-                Date.from(java.time.Instant.now())));
+
+        ModerHistoryDto moderHistory = new ModerHistoryDto(
+                null, user.getId(), ModerAction.GET_POSTS, null, null, Date.from(java.time.Instant.now()));
+        kafkaService.send("moder_audit", user.getId().toString(), moderHistory);
 
         if (page >= moderationResult.getTotalPages())
             return ResponseEntity.badRequest().body("Invalid page number");
