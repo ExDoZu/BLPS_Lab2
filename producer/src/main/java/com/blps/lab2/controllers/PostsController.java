@@ -33,18 +33,16 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/posts")
 public class PostsController {
 
     private final PostService postService;
 
-    @DeleteMapping("/posts")
-    public ResponseEntity<?> archivePost(
-            Authentication auth,
-            long postId) {
-
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<?> archivePost(@PathVariable long postId, Authentication auth) {
         try {
             postService.delete(postId, auth.getName());
+            return ResponseEntity.ok().build();
         } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (AccessDeniedException e) {
@@ -52,56 +50,51 @@ public class PostsController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        return ResponseEntity.ok().build();
-
     }
 
-    @GetMapping("/posts/mine")
-    public ResponseEntity<?> getMethodName(
+    @GetMapping("/mine")
+    public ResponseEntity<?> getUserPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Authentication auth) {
-        if (size <= 0)
+
+        if (size <= 0) {
             return ResponseEntity.badRequest().body("Invalid page size");
+        }
 
-        GetResult getResult = postService.getByUserPhoneNumber(auth.getName(), page, size);
+        GetResult result = postService.getByUserPhoneNumber(auth.getName(), page, size);
 
-        if (page >= getResult.getTotalPages())
+        if (page >= result.getTotalPages()) {
             return ResponseEntity.badRequest().body("No such page");
+        }
 
         List<ResponseSimplePost> responsePosts = new ArrayList<>();
-        for (Post post : getResult.getPosts()) {
+        for (Post post : result.getPosts()) {
             responsePosts.add(new ResponseSimplePost(post));
         }
-        var response = new HashMap<String, Object>();
-        response.put("posts", responsePosts);
-        response.put("totalPages", getResult.getTotalPages());
-        response.put("currentPage", page);
-        return ResponseEntity.ok().body(response);
 
+        Map<String, Object> response = new HashMap<>();
+        response.put("posts", responsePosts);
+        response.put("totalPages", result.getTotalPages());
+        response.put("currentPage", page);
+
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/posts")
-    public ResponseEntity<?> setPost(
-            @RequestBody ReceivePost entity,
-            Authentication auth) {
-
-        Post savedPost;
+    @PostMapping
+    public ResponseEntity<?> createPost(@RequestBody ReceivePost entity, Authentication auth) {
         try {
-            savedPost = postService.post(auth.getName(), entity.getAddressId(), entity.getMetroId(),
-                    entity.toPostNoFK());
+            Post savedPost = postService.post(auth.getName(), entity.getAddressId(), entity.getMetroId(), entity.toPostNoFK());
+            URI location = URI.create("/posts/" + savedPost.getId());
+            return ResponseEntity.created(location).build();
         } catch (NotFoundException e) {
-            return new ResponseEntity<>("Post not found", HttpStatus.NOT_FOUND);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Post not found");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        URI location = URI.create("/posts/" + String.valueOf(savedPost.getId()));
-        return ResponseEntity.created(location).build();
     }
 
-    @PutMapping("/posts/{postId}")
+    @PutMapping("/{postId}")
     public ResponseEntity<?> updatePost(
             @PathVariable long postId,
             @RequestBody ReceivePost entity,
@@ -109,12 +102,10 @@ public class PostsController {
 
         Post post = entity.toPostNoFK();
         post.setId(postId);
-        Long addressID = entity.getAddressId();
-        Long metroID = entity.getMetroId();
 
-        Post newPost;
         try {
-            newPost = postService.post(auth.getName(), addressID, metroID, post);
+            Post updatedPost = postService.post(auth.getName(), entity.getAddressId(), entity.getMetroId(), post);
+            return ResponseEntity.ok(new ResponsePost(updatedPost));
         } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (NotFoundException e) {
@@ -124,15 +115,13 @@ public class PostsController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
-
-        return ResponseEntity.ok(new ResponsePost(newPost));
     }
 
-    @GetMapping("/posts/{postId}")
-    public ResponseEntity<?> getPost(@PathVariable("postId") long postId, Authentication auth) {
+    @GetMapping("/{postId}")
+    public ResponseEntity<?> getPost(@PathVariable long postId, Authentication auth) {
         try {
             ResponsePost postResponse = postService.getPost(postId, auth);
-            return ResponseEntity.ok().body(postResponse);
+            return ResponseEntity.ok(postResponse);
         } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
         } catch (AccessDeniedException e) {
@@ -140,10 +129,10 @@ public class PostsController {
         }
     }
 
-    @GetMapping("/posts")
+    @GetMapping
     public ResponseEntity<?> getPosts(
-            @RequestParam(defaultValue = "0") @Min(value = 0) int page,
-            @RequestParam(defaultValue = "10") @Min(value = 1) int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) int size,
             String city,
             String street,
             Integer houseNumber,
@@ -164,11 +153,9 @@ public class PostsController {
                     page, size, city, street, houseNumber, houseLetter, minArea, maxArea, minPrice,
                     maxPrice, roomNumber, minFloor, maxFloor, stationName, branchNumber, auth);
 
-            return ResponseEntity.ok().body(response);
-
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
 }
