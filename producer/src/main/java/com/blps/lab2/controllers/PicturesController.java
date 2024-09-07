@@ -10,11 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.blps.common.UserHistoryDto;
 import com.blps.common.UserHistoryDto.UserAction;
-import com.blps.lab2.model.beans.post.User;
-import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.PictureService;
 import com.blps.lab2.model.services.PictureService.GetResult;
-import com.blps.lab2.model.services.KafkaService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,60 +27,30 @@ import org.springframework.http.MediaType;
 @RequiredArgsConstructor
 public class PicturesController {
     private final PictureService pictureService;
-    private final UserRepository userRepository;
-    private final KafkaService kafkaService;
 
     @GetMapping("/pictures/{name}")
-    public ResponseEntity<?> getMethodName(
-            @PathVariable String name,
-            Authentication auth) {
-
-        GetResult result;
+    public ResponseEntity<?> getPicture(@PathVariable String name, Authentication auth) {
         try {
-            result = pictureService.getPicture(name);
+            GetResult result = pictureService.getPicture(name, auth != null ? auth.getName() : null);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(result.getMimeType()))
+                    .body(result.getImageBytes());
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Failed to get picture");
         }
-        Long userId = 0L;
-        if (auth != null) {
-            User user = userRepository.findByPhoneNumber(auth.getName());
-            if (user != null) {
-                userId = user.getId();
-            }
-        }
-
-        UserHistoryDto userHistory = new UserHistoryDto(
-          null, userId, UserAction.GET_PHOTO, null, 
-          name, Date.from(java.time.Instant.now())
-        );
-        kafkaService.send("user_audit", userId.toString(), userHistory);
-        
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType(result.getMimeType()))
-                .body(result.getImageBytes());
     }
 
     @PostMapping("/pictures")
-    public ResponseEntity<?> postMethodName(
-            @RequestParam("file") MultipartFile file,
-            Authentication auth) {
-
+    public ResponseEntity<?> uploadPicture(@RequestParam("file") MultipartFile file, Authentication auth) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("Please select a file to upload");
         }
-        String newFileName;
         try {
-            newFileName = pictureService.savePicture(file);
+            String newFileName = pictureService.savePicture(file, auth.getName());
+            URI location = URI.create("/pictures/" + newFileName);
+            return ResponseEntity.created(location).build();
         } catch (IOException e) {
-            e.printStackTrace();
             return ResponseEntity.internalServerError().body("Failed to upload file");
         }
-        User user = userRepository.findByPhoneNumber(auth.getName());
-        UserHistoryDto userHistory = new UserHistoryDto(null, user.getId(), UserAction.ADD_PHOTO, null, newFileName,
-                Date.from(java.time.Instant.now()));
-        kafkaService.send("user_audit", user.getId().toString(), userHistory);
-
-        URI location = URI.create("/pictures/" + newFileName);
-        return ResponseEntity.created(location).build();
     }
-
 }
