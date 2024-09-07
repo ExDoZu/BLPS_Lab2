@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class ModerationService {
 
     @Qualifier("postTxManager")
-    private final PlatformTransactionManager postTxMangaer;
+    private final PlatformTransactionManager postTxManager;
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -67,7 +67,7 @@ public class ModerationService {
         
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setName("Approving transaction");
-        TransactionStatus status = postTxMangaer.getTransaction(def);
+        TransactionStatus status = postTxManager.getTransaction(def);
         try {
             User me = userRepository.findByPhoneNumber(moderatorPhone);
             Post post = postRepository.findById(postId).orElse(null);
@@ -92,9 +92,9 @@ public class ModerationService {
             postRepository.save(post);
 
         } catch (Exception ex) {
-            postTxMangaer.rollback(status);
+            postTxManager.rollback(status);
             throw ex;
         }
-        postTxMangaer.commit(status);
+        postTxManager.commit(status);
     }
 }

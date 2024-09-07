@@ -5,19 +5,19 @@ import com.blps.common.ModerHistoryDto;
 import com.blps.consumer.model.repository.logstats.UserHistoryRepository;
 import com.blps.consumer.model.repository.logstats.ModerHistoryRepository;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Component;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 import com.blps.consumer.beans.UserHistory;
 import com.blps.consumer.beans.ModerHistory;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
-@Component
+@Service
 @AllArgsConstructor
 public class ConsumerService {
     private final UserHistoryRepository userHistoryRepository;
@@ -29,15 +29,9 @@ public class ConsumerService {
 
         UserHistoryDto dto = record.value();
 
-        UserHistory userHistory = new UserHistory(
-                null,
-                dto.getUserID(),
-                UserHistory.UserAction.valueOf(dto.getAction().name()),
-                dto.getInteracted_post(),
-                dto.getNote(),
-                dto.getDatetime()
-        );
+        UserHistory userHistory = convertToUserHistory(dto);
         userHistoryRepository.save(userHistory);
+        log.info("User history saved: {}", userHistory);
     }
 
     @KafkaListener(topics = "moder_audit", groupId = "producer-1")
@@ -46,15 +40,9 @@ public class ConsumerService {
 
         ModerHistoryDto dto = record.value();
 
-        ModerHistory moderHistory = new ModerHistory(
-                null,
-                dto.getModerID(),
-                ModerHistory.ModerAction.valueOf(dto.getAction().name()),
-                dto.getInteracted_post(),
-                dto.getNote(),
-                dto.getDatetime()
-        );
+        ModerHistory moderHistory = convertToModerHistory(dto);
         moderHistoryRepository.save(moderHistory);
+        log.info("Moder history saved: {}", moderHistory);
     }
 
     @Scheduled(cron = "0 * * * * *")
@@ -66,5 +54,27 @@ public class ConsumerService {
         userHistoryRepository.deleteAll(oldEntries);
 
         log.info("Deleted {} old user history entries.", oldEntries.size());
+    }
+
+    private UserHistory convertToUserHistory(UserHistoryDto dto) {
+        return new UserHistory(
+                null,
+                dto.getUserID(),
+                UserHistory.UserAction.valueOf(dto.getAction().name()),
+                dto.getInteracted_post(),
+                dto.getNote(),
+                dto.getDatetime()
+        );
+    }
+
+    private ModerHistory convertToModerHistory(ModerHistoryDto dto) {
+        return new ModerHistory(
+                null,
+                dto.getModerID(),
+                ModerHistory.ModerAction.valueOf(dto.getAction().name()),
+                dto.getInteracted_post(),
+                dto.getNote(),
+                dto.getDatetime()
+        );
     }
 }

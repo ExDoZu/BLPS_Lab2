@@ -10,7 +10,6 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
@@ -18,17 +17,21 @@ import java.util.Map;
 public class KafkaConsumerConfig {
 
     private static final String BOOTSTRAP_SERVERS = "kafka:19092";
-    private static final String KEY_DESERIALIZER = StringDeserializer.class.getName();
-    private static final String VALUE_DESERIALIZER = JsonDeserializer.class.getName();
 
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, KEY_DESERIALIZER);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, VALUE_DESERIALIZER);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.blps.common");
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<>(Object.class));
+        Map<String, Object> props = Map.of(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS,
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName(),
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class.getName(),
+                JsonDeserializer.TRUSTED_PACKAGES, "com.blps.common"
+        );
+
+        return new DefaultKafkaConsumerFactory<>(
+                props, 
+                new StringDeserializer(), 
+                new JsonDeserializer<>(Object.class)
+        );
     }
 
     @Bean

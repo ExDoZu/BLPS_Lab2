@@ -1,18 +1,9 @@
 package com.blps.common;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 import lombok.*;
 
 import java.util.Date;
 
-@Entity
 @Getter
 @Setter
 @ToString
@@ -33,22 +24,15 @@ public class UserHistoryDto {
         REGISTER,
     }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "uh_seq")
-    @SequenceGenerator(name = "uh_seq", sequenceName = "uh_id_sequence")
     private Long id;
 
-    @Column(nullable = false)
     private Long userID;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
     private UserAction action;
 
     private Long interacted_post;
 
     private String note;
-    @Column(nullable = false)
-    private Date datetime;
 
+    private Date datetime;
 }
