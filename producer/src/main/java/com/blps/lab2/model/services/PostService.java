@@ -1,13 +1,15 @@
 package com.blps.lab2.model.services;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
+import com.blps.lab2.controllers.dto.ResponsePost;
+import com.blps.lab2.controllers.dto.ResponseSimplePost;
 import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -27,7 +29,6 @@ import com.blps.lab2.model.repository.post.AddressRepository;
 import com.blps.lab2.model.repository.post.MetroRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
-import com.blps.lab2.model.services.KafkaService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -117,6 +118,45 @@ public class PostService {
 
     }
 
+    public ResponsePost getPost(long postId, Authentication auth) throws AccessDeniedException, NotFoundException {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("Post not found"));
+
+        boolean archived = post.getArchived();
+        Boolean approved = post.getApproved();
+        Date paidUntil = post.getPaidUntil();
+
+        if (auth == null) {
+            if (!archived && approved && paidUntil != null && paidUntil.after(Date.from(java.time.Instant.now()))) {
+                return new ResponsePost(post);
+            }
+            throw new AccessDeniedException("Access denied");
+        } else {
+            User me = userRepository.findByPhoneNumber(auth.getName());
+
+            if (post.getUser().getId() == me.getId() || (!archived && approved && paidUntil != null
+                    && paidUntil.after(Date.from(java.time.Instant.now())))) {
+                
+                UserHistoryDto userHistory = new UserHistoryDto(
+                        null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
+                        null, Date.from(java.time.Instant.now())
+                );
+                kafkaService.send("user_audit", me.getId().toString(), userHistory);
+                
+                return new ResponsePost(post);
+            }
+
+            UserHistoryDto userHistory = new UserHistoryDto(
+                    null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
+                    "Access denied", Date.from(java.time.Instant.now())
+            );
+            kafkaService.send("user_audit", me.getId().toString(), userHistory);
+
+            throw new AccessDeniedException("Access denied");
+        }
+    }
+
+
+
     public void delete(long postId, String userPhone) throws NotFoundException, AccessDeniedException {
 
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
@@ -202,22 +242,56 @@ public class PostService {
         return new GetResult(postPage.getContent(), postPage.getTotalPages());
     }
 
+    public Map<String, Object> getFilteredPosts(
+            int page, int size, String city, String street, Integer houseNumber,
+            Character houseLetter, Double minArea, Double maxArea, Double minPrice,
+            Double maxPrice, Integer roomNumber, Integer minFloor, Integer maxFloor,
+            String stationName, Integer branchNumber, Authentication auth) {
+
+        GetResult getResult = getByFilterParams(
+                page, size, city, street, houseNumber, houseLetter, minArea, maxArea, minPrice,
+                maxPrice, roomNumber, minFloor, maxFloor, stationName, branchNumber);
+
+        List<ResponseSimplePost> responsePosts = new ArrayList<>();
+        for (Post post : getResult.getPosts()) {
+            responsePosts.add(new ResponseSimplePost(post));
+        }
+
+        Long userId = 0L;
+        if (auth != null) {
+            User user = userRepository.findByPhoneNumber(auth.getName());
+            if (user != null) {
+                userId = user.getId();
+            }
+        }
+        UserHistoryDto userHistory = new UserHistoryDto(
+                null, userId, UserAction.GET_POSTS, null, null, Date.from(java.time.Instant.now())
+        );
+        kafkaService.send("user_audit", userId.toString(), userHistory);
+
+        if (page >= getResult.getTotalPages()) {
+            throw new IllegalArgumentException("No such page");
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("posts", responsePosts);
+        response.put("totalPages", getResult.getTotalPages());
+        response.put("currentPage", page);
+
+        return response;
+    }
+
     public GetResult getByFilterParams(int page, int size, String city, String street, Integer houseNumber,
-            Character houseLetter,
-            Double minArea,
-            Double maxArea, Double minPrice, Double maxPrice, Integer roomNumber, Integer minFloor, Integer maxFloor,
-            String stationName, Integer branchNumber) {
+                                       Character houseLetter, Double minArea, Double maxArea, Double minPrice,
+                                       Double maxPrice, Integer roomNumber, Integer minFloor, Integer maxFloor,
+                                       String stationName, Integer branchNumber) {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<Post> postPage;
-
-        postPage = postRepository.findByMany(city, street, houseNumber, houseLetter, minArea, maxArea,
-                minPrice,
-                maxPrice, roomNumber, minFloor, maxFloor, stationName, branchNumber, pageable);
+        Page<Post> postPage = postRepository.findByMany(city, street, houseNumber, houseLetter, minArea, maxArea,
+                minPrice, maxPrice, roomNumber, minFloor, maxFloor, stationName, branchNumber, pageable);
 
         List<Post> posts = postPage.getContent();
-
         return new GetResult(posts, postPage.getTotalPages());
     }
 

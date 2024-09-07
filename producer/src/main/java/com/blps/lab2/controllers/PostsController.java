@@ -1,10 +1,7 @@
 package com.blps.lab2.controllers;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,15 +23,9 @@ import com.blps.lab2.controllers.dto.ResponseSimplePost;
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.InvalidDataException;
 import com.blps.lab2.exceptions.NotFoundException;
-import com.blps.common.UserHistoryDto;
-import com.blps.common.UserHistoryDto.UserAction;
 import com.blps.lab2.model.beans.post.Post;
-import com.blps.lab2.model.beans.post.User;
-import com.blps.lab2.model.repository.post.PostRepository;
-import com.blps.lab2.model.repository.post.UserRepository;
 import com.blps.lab2.model.services.PostService;
 import com.blps.lab2.model.services.PostService.GetResult;
-import com.blps.lab2.model.services.KafkaService;
 
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -46,9 +37,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 public class PostsController {
 
     private final PostService postService;
-    private final UserRepository userRepository;
-    private final PostRepository postRepository;
-    private final KafkaService kafkaService;
 
     @DeleteMapping("/posts")
     public ResponseEntity<?> archivePost(
@@ -141,43 +129,15 @@ public class PostsController {
     }
 
     @GetMapping("/posts/{postId}")
-    public ResponseEntity<?> getPost(
-            @PathVariable("postId") long postId,
-            Authentication auth) {
-
-        Post post = postRepository.findById(postId).orElse(null);
-        if (post == null)
+    public ResponseEntity<?> getPost(@PathVariable("postId") long postId, Authentication auth) {
+        try {
+            ResponsePost postResponse = postService.getPost(postId, auth);
+            return ResponseEntity.ok().body(postResponse);
+        } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
-
-        boolean archived = post.getArchived();
-        Boolean approved = post.getApproved();
-        Date paidUntil = post.getPaidUntil();
-        if (auth == null) {
-
-            if (!archived && approved && paidUntil != null && paidUntil.after(Date.from(java.time.Instant.now())))
-                return ResponseEntity.ok().body(new ResponsePost(post));
-        } else {
-            User me = userRepository.findByPhoneNumber(auth.getName());
-
-            if ((post.getUser().getId() == me.getId()) || (!archived && approved && paidUntil != null
-                    && paidUntil.after(Date.from(java.time.Instant.now())))) {
-                UserHistoryDto userHistory = new UserHistoryDto(
-                        null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
-                        null, Date.from(java.time.Instant.now())
-                );
-                kafkaService.send("user_audit", me.getId().toString(), userHistory);
-
-                return ResponseEntity.ok().body(new ResponsePost(post));
-            }
-            UserHistoryDto userHistory = new UserHistoryDto(
-                    null, me.getId(), UserAction.GET_ONE_POST, post.getId(),
-                    "Access denied", Date.from(java.time.Instant.now())
-            );
-            kafkaService.send("user_audit", me.getId().toString(), userHistory);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-
     }
 
     @GetMapping("/posts")
@@ -199,39 +159,16 @@ public class PostsController {
             Integer branchNumber,
             Authentication auth) {
 
-        GetResult getResult = postService.getByFilterParams(
-                page, size, city,
-                street, houseNumber, houseLetter,
-                minArea, maxArea, minPrice,
-                maxPrice, roomNumber, minFloor,
-                maxFloor, stationName, branchNumber);
+        try {
+            Map<String, Object> response = postService.getFilteredPosts(
+                    page, size, city, street, houseNumber, houseLetter, minArea, maxArea, minPrice,
+                    maxPrice, roomNumber, minFloor, maxFloor, stationName, branchNumber, auth);
 
-        List<ResponseSimplePost> responsePosts = new ArrayList<>();
-        for (Post post : getResult.getPosts()) {
-            responsePosts.add(new ResponseSimplePost(post));
+            return ResponseEntity.ok().body(response);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        Long userId = 0L;
-        if (auth != null) {
-            User user = userRepository.findByPhoneNumber(auth.getName());
-            if (user != null) {
-                userId = user.getId();
-            }
-        }
-        UserHistoryDto userHistory = new UserHistoryDto(
-                null, userId, UserAction.GET_POSTS, null,
-                null, Date.from(java.time.Instant.now())
-        );
-        kafkaService.send("user_audit", userId.toString(), userHistory);
-        
-        if (page >= getResult.getTotalPages())
-            return ResponseEntity.badRequest().body("No such page");
-        var response = new HashMap<String, Object>();
-        response.put("posts", responsePosts);
-        response.put("totalPages", getResult.getTotalPages());
-        response.put("currentPage", page);
-        return ResponseEntity.ok().body(response);
-
     }
 
 }
