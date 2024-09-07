@@ -3,6 +3,11 @@ package com.blps.lab2.controllers;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.blps.lab2.exceptions.InvalidDataException;
+import com.blps.lab2.exceptions.NotFoundException;
+import com.blps.lab2.model.services.AddressService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,12 +34,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @RequestMapping("/api")
 public class AddressesController {
 
-    private final AddressRepository addressRepository;
-    private final MetroRepository metroRepository;
-    private final UserRepository userRepository;
-    private final AddressValidationService addressValidationService;
-    private final KafkaService kafkaService;
-
+    private final AddressService addressService;
     @GetMapping("/addresses")
     public ResponseEntity<?> getAddresses(
             @NotBlank String city,
@@ -43,40 +43,14 @@ public class AddressesController {
             Character houseLetter,
             Authentication auth) {
 
-        if (!addressValidationService.checkAddressParams(city, street, houseNumber, houseLetter)) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        List<Address> addresses = addressRepository.findByMany(city, street, houseNumber, houseLetter);
-        if (addresses.size() == 0) {
+        try {
+            Map<String, Object> response = addressService.getAddresses(city, street, houseNumber, houseLetter, auth);
+            return ResponseEntity.ok().body(response);
+        } catch (NotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (InvalidDataException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        List<Metro> metros = metroRepository.findByAddressСity(addresses.get(0).getCity());
-
-        if (auth != null) {
-            User user = userRepository.findByPhoneNumber(auth.getName());
-            String searchDetails = city + " " +
-                    (street == null ? "" : street) + " " +
-                    (houseNumber == null ? "" : houseNumber.toString()) + " " +
-                    (houseLetter == null ? "" : houseLetter);
-            
-            UserHistoryDto userHistory = new UserHistoryDto(
-                null, 
-                user.getId(), 
-                UserAction.GET_ADDRESSES, 
-                null, 
-                searchDetails, 
-                Date.from(java.time.Instant.now())
-            );
-            
-            kafkaService.send("user_audit", user.getId().toString(), userHistory);
-        }
-
-        var response = new HashMap<String, Object>();
-        response.put("addresses", addresses);
-        response.put("metros", metros);
-
-        return ResponseEntity.ok().body(response);
     }
 
 }

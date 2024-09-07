@@ -14,7 +14,7 @@ public interface MetroRepository extends JpaRepository<Metro, Long> {
     List<Metro> findByName(String name);
 
     @Query("SELECT m FROM Metro m WHERE m.address.city = :city")
-    List<Metro> findByAddressСity(@Param("city") String city);
+    List<Metro> findByAddressCity(@Param("city") String city);
 
     List<Metro> findByBranchNumber(Integer branchNumber);
 }
