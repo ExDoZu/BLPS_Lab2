@@ -1,7 +1,9 @@
 package com.blps.lab2.model.services;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,7 +23,7 @@ import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
 import com.blps.lab2.model.repository.post.PostRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
-import com.blps.lab2.model.services.KafkaService;
+import com.blps.lab2.controllers.dto.ResponsePost;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,44 +38,43 @@ public class ModerationService {
     private final UserRepository userRepository;
     private final KafkaService kafkaService;
 
-    public class ModerationResult {
-        public List<Post> posts;
-        public int totalPages;
-
-        public ModerationResult(List<Post> posts, int totalPages) {
-            this.posts = posts;
-            this.totalPages = totalPages;
-        }
-
-        public List<Post> getPosts() {
-            return posts;
-        }
-
-        public int getTotalPages() {
-            return totalPages;
-        }
-    }
-
-    public ModerationResult getModerationPosts(int page, int size) { 
+    public HashMap<String, Object> getModerationPosts(int page, int size, String moderatorPhone) throws AccessDeniedException {
+        User user = userRepository.findByPhoneNumber(moderatorPhone);
+        
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> postPage = postRepository.findByArchivedAndApproved(false, null, pageable);
-        List<Post> posts = postPage.getContent();
-        return new ModerationResult(posts, postPage.getTotalPages());
+
+        if (page >= postPage.getTotalPages()) {
+            throw new IllegalArgumentException("Invalid page number");
+        }
+
+        List<ResponsePost> responsePosts = postPage.getContent()
+                .stream()
+                .map(ResponsePost::new)
+                .collect(Collectors.toList());
+
+        ModerHistoryDto moderHistory = new ModerHistoryDto(
+                null, user.getId(), ModerAction.GET_POSTS, null, null, Date.from(java.time.Instant.now()));
+        kafkaService.send("moder_audit", user.getId().toString(), moderHistory);
+
+        var response = new HashMap<String, Object>();
+        response.put("currentPage", page);
+        response.put("totalPages", postPage.getTotalPages());
+        response.put("posts", responsePosts);
+        return response;
     }
 
     public void approve(long postId, String moderatorPhone, boolean approved)
             throws AccessDeniedException, NotFoundException {
-        
-        
+
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setName("Approving transaction");
         TransactionStatus status = postTxManager.getTransaction(def);
+
         try {
             User me = userRepository.findByPhoneNumber(moderatorPhone);
-            Post post = postRepository.findById(postId).orElse(null);
-            if (post == null) {
-                throw new NotFoundException("Post not found");
-            }
+            Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("Post not found"));
+            
             post.setApproved(approved);
             ModerAction action = approved ? ModerAction.APPROVE : ModerAction.REJECT;
 
