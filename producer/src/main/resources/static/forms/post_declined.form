@@ -1,0 +1,23 @@
+{
+  "components": [
+    {
+      "text": "Your post was declined by moderator",
+      "label": "Text view",
+      "type": "text",
+      "layout": {
+        "row": "Row_1vgqw0b",
+        "columns": null
+      },
+      "id": "Field_0lk9e26"
+    }
+  ],
+  "type": "default",
+  "id": "post_declined",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.27.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.21.0",
+  "schemaVersion": 16
+}

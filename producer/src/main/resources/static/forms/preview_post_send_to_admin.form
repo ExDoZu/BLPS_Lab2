@@ -1,0 +1,150 @@
+{
+  "components": [
+    {
+      "text": "Draft saved",
+      "label": "Text view",
+      "type": "text",
+      "layout": {
+        "row": "Row_1qvap7w",
+        "columns": null
+      },
+      "id": "Field_0hd9qha"
+    },
+    {
+      "label": "Title",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_15qwqb8",
+        "columns": null
+      },
+      "id": "Field_10akait",
+      "key": "post_title",
+      "validate": {
+        "required": false
+      },
+      "readonly": true
+    },
+    {
+      "label": "Description",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_16k36cc",
+        "columns": null
+      },
+      "id": "Field_0n9kw64",
+      "key": "post_description",
+      "validate": {
+        "required": false
+      },
+      "readonly": true
+    },
+    {
+      "label": "Room number",
+      "type": "number",
+      "layout": {
+        "row": "Row_12j5kbx",
+        "columns": null
+      },
+      "id": "Field_0lck26c",
+      "key": "post_room_number",
+      "validate": {
+        "required": false
+      },
+      "readonly": true
+    },
+    {
+      "label": "Area",
+      "type": "number",
+      "layout": {
+        "row": "Row_12j5kbx",
+        "columns": null
+      },
+      "id": "Field_0n4uktu",
+      "key": "post_area",
+      "validate": {
+        "required": false
+      },
+      "readonly": true
+    },
+    {
+      "label": "Floor",
+      "type": "number",
+      "layout": {
+        "row": "Row_12j5kbx",
+        "columns": null
+      },
+      "id": "Field_180nye8",
+      "key": "post_floor",
+      "validate": {
+        "required": false
+      },
+      "readonly": true
+    },
+    {
+      "label": "Address",
+      "type": "select",
+      "layout": {
+        "row": "Row_16ummfa",
+        "columns": null
+      },
+      "id": "Field_1h89ugf",
+      "key": "post_address",
+      "searchable": true,
+      "validate": {
+        "required": false
+      },
+      "valuesKey": "addresses",
+      "readonly": true
+    },
+    {
+      "label": "Metro",
+      "type": "select",
+      "layout": {
+        "row": "Row_0gdqjwb",
+        "columns": null
+      },
+      "id": "Field_1hjo9bp",
+      "key": "post_metro",
+      "validate": {
+        "required": false
+      },
+      "searchable": true,
+      "valuesKey": "metros",
+      "readonly": true
+    },
+    {
+      "label": "Price",
+      "type": "number",
+      "layout": {
+        "row": "Row_1pz1eit",
+        "columns": null
+      },
+      "id": "Field_0xagw76",
+      "key": "post_price",
+      "validate": {
+        "required": false
+      },
+      "readonly": true
+    },
+    {
+      "action": "submit",
+      "label": "Send to moderator check",
+      "type": "button",
+      "layout": {
+        "row": "Row_02xnf7r",
+        "columns": null
+      },
+      "id": "Field_0zgvs6o",
+      "properties": {}
+    }
+  ],
+  "type": "default",
+  "id": "preview_post_send_to_admin",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.27.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.21.0",
+  "schemaVersion": 16
+}

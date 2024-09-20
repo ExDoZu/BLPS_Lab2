@@ -1,0 +1,63 @@
+{
+  "components": [
+    {
+      "text": "Choose due time for payment",
+      "label": "Text view",
+      "type": "text",
+      "layout": {
+        "row": "Row_1grqxcj",
+        "columns": null
+      },
+      "id": "Field_0ge5aj7"
+    },
+    {
+      "label": "Day",
+      "type": "number",
+      "layout": {
+        "row": "Row_1k36m5h",
+        "columns": null
+      },
+      "id": "Field_06i9900",
+      "key": "post_day_pay"
+    },
+    {
+      "label": "Month",
+      "type": "number",
+      "layout": {
+        "row": "Row_1k36m5h",
+        "columns": null
+      },
+      "id": "Field_0f4esi1",
+      "key": "post_month_pay"
+    },
+    {
+      "label": "Year",
+      "type": "number",
+      "layout": {
+        "row": "Row_1k36m5h",
+        "columns": null
+      },
+      "id": "Field_0pu61ht",
+      "key": "post_year_pay"
+    },
+    {
+      "action": "submit",
+      "label": "Submit",
+      "type": "button",
+      "layout": {
+        "row": "Row_138vybc",
+        "columns": null
+      },
+      "id": "Field_0knkhba"
+    }
+  ],
+  "type": "default",
+  "id": "pay",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.27.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.21.0",
+  "schemaVersion": 16
+}

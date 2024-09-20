@@ -1,0 +1,23 @@
+{
+  "components": [
+    {
+      "text": "Your post was approved!",
+      "label": "Text view",
+      "type": "text",
+      "layout": {
+        "row": "Row_1dncz9z",
+        "columns": null
+      },
+      "id": "Field_0j968x4"
+    }
+  ],
+  "type": "default",
+  "id": "published",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.27.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.21.0",
+  "schemaVersion": 16
+}

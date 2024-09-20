@@ -1,0 +1,54 @@
+{
+  "components": [
+    {
+      "text": "\nThere is not enough money for this payment period",
+      "label": "Text view",
+      "type": "text",
+      "layout": {
+        "row": "Row_1m1cua6",
+        "columns": null
+      },
+      "id": "Field_1i91v6p"
+    },
+    {
+      "values": [
+        {
+          "label": "Exit",
+          "value": "Exit"
+        },
+        {
+          "label": "Retry",
+          "value": "Retry"
+        }
+      ],
+      "label": "What are we going to do?",
+      "type": "radio",
+      "layout": {
+        "row": "Row_1vmz2ro",
+        "columns": null
+      },
+      "id": "Field_12cke2f",
+      "key": "no_money_decision",
+      "defaultValue": "Exit"
+    },
+    {
+      "action": "submit",
+      "label": "Button",
+      "type": "button",
+      "layout": {
+        "row": "Row_1u4r7ur",
+        "columns": null
+      },
+      "id": "Field_18d06jp"
+    }
+  ],
+  "type": "default",
+  "id": "no_money",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.27.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.21.0",
+  "schemaVersion": 16
+}

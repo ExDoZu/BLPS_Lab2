@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0d5r57v" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.27.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
+  <bpmn:process id="delete_old_events" name="DeleteOldEvents" isExecutable="true">
+    <bpmn:startEvent id="Event_0d9hesw">
+      <bpmn:outgoing>Flow_1c5ka1m</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_03rq3d7">
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">0/10 * * * * ?</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1c5ka1m" sourceRef="Event_0d9hesw" targetRef="Activity_1m9addg" />
+    <bpmn:serviceTask id="Activity_1m9addg" name="send clear old history message to consumer" camunda:class="com.blps.lab2.delegates.SendClearMsg">
+      <bpmn:incoming>Flow_1c5ka1m</bpmn:incoming>
+      <bpmn:outgoing>Flow_0yxzuu3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_0bnzucz">
+      <bpmn:incoming>Flow_0yxzuu3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0yxzuu3" sourceRef="Activity_1m9addg" targetRef="Event_0bnzucz" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="delete_old_events">
+      <bpmndi:BPMNShape id="Event_0d9hesw_di" bpmnElement="Event_0d9hesw">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0vn9pji_di" bpmnElement="Activity_1m9addg">
+        <dc:Bounds x="260" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0bnzucz_di" bpmnElement="Event_0bnzucz">
+        <dc:Bounds x="432" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1c5ka1m_di" bpmnElement="Flow_1c5ka1m">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="260" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0yxzuu3_di" bpmnElement="Flow_0yxzuu3">
+        <di:waypoint x="360" y="120" />
+        <di:waypoint x="432" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
