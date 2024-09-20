@@ -6,7 +6,7 @@ services:
       context: producer/.
       dockerfile: Dockerfile
     ports:
-      - "13400:13400"
+      - "8080:8080"
     depends_on:
       - service-db1
       # - service-db2
