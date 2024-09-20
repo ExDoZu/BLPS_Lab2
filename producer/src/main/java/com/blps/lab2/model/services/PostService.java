@@ -5,15 +5,15 @@ import java.util.*;
 import com.blps.lab2.controllers.dto.ResponsePost;
 import com.blps.lab2.controllers.dto.ResponseSimplePost;
 import org.springframework.data.domain.Pageable;
-import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+// import org.springframework.transaction.PlatformTransactionManager;
+// import org.springframework.transaction.TransactionStatus;
+// import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.InvalidDataException;
@@ -42,17 +42,17 @@ public class PostService {
 
     private final MetroValidationService metroValidationService;
     private final PostValidationService postValidationService;
-    @Qualifier("postTxManager")
-    private final PlatformTransactionManager txManager;
+    // @Qualifier("postTxManager")
+    // private final PlatformTransactionManager txManager;
 
     private final KafkaService kafkaService;
 
     public Post post(String phone, Long addressID, Long metroID, Post post)
             throws InvalidDataException, NotFoundException, AccessDeniedException {
 
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("Post new/edit transaction");
-        TransactionStatus status = txManager.getTransaction(def);
+        // DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        // def.setName("Post new/edit transaction");
+        // TransactionStatus status = txManager.getTransaction(def);
 
         Post savedPost;
         try {
@@ -109,10 +109,10 @@ public class PostService {
             kafkaService.send("user_audit", user.getId().toString(), userHistory);
 
         } catch (Exception ex) {
-            txManager.rollback(status);
+//            txManager.rollback(status);
             throw ex;
         }
-        txManager.commit(status);
+//        txManager.commit(status);
 
         return savedPost;
 
@@ -159,9 +159,9 @@ public class PostService {
 
     public void delete(long postId, String userPhone) throws NotFoundException, AccessDeniedException {
 
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("Post delete transaction");
-        TransactionStatus status = txManager.getTransaction(def);
+        // DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        // def.setName("Post delete transaction");
+        // TransactionStatus status = txManager.getTransaction(def);
 
         Post post;
         try {
@@ -186,10 +186,10 @@ public class PostService {
             kafkaService.send("user_audit", me.getId().toString(), userHistory);
 
         } catch (Exception ex) {
-            txManager.rollback(status);
+//            txManager.rollback(status);
             throw ex;
         }
-        txManager.commit(status);
+//        txManager.commit(status);
 
     }
 
@@ -213,9 +213,9 @@ public class PostService {
 
     public GetResult getByUserPhoneNumber(String phoneNumber, int page, int size) {
 
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("get posts by phone number");
-        TransactionStatus status = txManager.getTransaction(def);
+        // DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        // def.setName("get posts by phone number");
+        // TransactionStatus status = txManager.getTransaction(def);
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> postPage;
@@ -234,10 +234,10 @@ public class PostService {
             kafkaService.send("user_audit", user.getId().toString(), userHistory);
 
         } catch (Exception ex) {
-            txManager.rollback(status);
+//            txManager.rollback(status);
             throw ex;
         }
-        txManager.commit(status);
+//        txManager.commit(status);
 
         return new GetResult(postPage.getContent(), postPage.getTotalPages());
     }

@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+// import org.springframework.transaction.PlatformTransactionManager;
+// import org.springframework.transaction.TransactionStatus;
+// import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.NotFoundException;
@@ -31,8 +31,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ModerationService {
 
-    @Qualifier("postTxManager")
-    private final PlatformTransactionManager postTxManager;
+    // @Qualifier("postTxManager")
+    // private final PlatformTransactionManager postTxManager;
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -67,9 +67,9 @@ public class ModerationService {
     public void approve(long postId, String moderatorPhone, boolean approved)
             throws AccessDeniedException, NotFoundException {
 
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("Approving transaction");
-        TransactionStatus status = postTxManager.getTransaction(def);
+        // DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        // def.setName("Approving transaction");
+        // TransactionStatus status = postTxManager.getTransaction(def);
 
         try {
             User me = userRepository.findByPhoneNumber(moderatorPhone);
@@ -93,9 +93,9 @@ public class ModerationService {
             postRepository.save(post);
 
         } catch (Exception ex) {
-            postTxManager.rollback(status);
+//            postTxManager.rollback(status);
             throw ex;
         }
-        postTxManager.commit(status);
+//        postTxManager.commit(status);
     }
 }

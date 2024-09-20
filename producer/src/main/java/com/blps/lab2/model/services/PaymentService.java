@@ -2,11 +2,11 @@ package com.blps.lab2.model.services;
 
 import java.util.Date;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+// import org.springframework.transaction.PlatformTransactionManager;
+// import org.springframework.transaction.TransactionStatus;
+// import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.blps.lab2.exceptions.AccessDeniedException;
 import com.blps.lab2.exceptions.PaymentException;
@@ -16,7 +16,7 @@ import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.beans.post.User;
 import com.blps.lab2.model.repository.post.PostRepository;
 import com.blps.lab2.model.repository.post.UserRepository;
-import com.blps.lab2.model.services.KafkaService;
+//import com.blps.lab2.model.services.KafkaService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,8 +27,8 @@ public class PaymentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
 
-    @Qualifier("postTxManager")
-    private final PlatformTransactionManager postTxManager;
+    // @Qualifier("postTxManager")
+    // private final PlatformTransactionManager postTxManager;
 
     private final KafkaService kafkaService;
 
@@ -65,9 +65,9 @@ public class PaymentService {
         final long days = diff / (24 * 60 * 60 * 1000) + 1;
         final double price = days * PRICE_PER_DAY;
 
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setName("Payment transaction");
-        TransactionStatus status = postTxManager.getTransaction(def);
+        // DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        // def.setName("Payment transaction");
+        // TransactionStatus status = postTxManager.getTransaction(def);
         
         User user;
         try {
@@ -100,10 +100,10 @@ public class PaymentService {
 
         } catch (Exception ex) {
            
-            postTxManager.rollback(status);
+//            postTxManager.rollback(status);
             throw ex;
         }
-        postTxManager.commit(status);
+//        postTxManager.commit(status);
 
         return new PayResult(user.getBalance(), price);
     }
