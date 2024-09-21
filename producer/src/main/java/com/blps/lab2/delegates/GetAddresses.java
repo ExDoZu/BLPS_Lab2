@@ -59,12 +59,4 @@ public class GetAddresses implements JavaDelegate {
         execution.setVariable("addresses", addresses);
         execution.setVariable("metros", metros);
     }
-
-    // Вспомогательный метод для создания записи
-    private Map<String, Object> createEntry(String label, int value) {
-        Map<String, Object> entry = new HashMap<>();
-        entry.put("label", label);
-        entry.put("value", value);
-        return entry;
-    }
 }

@@ -37,7 +37,8 @@
       "key": "post_room_number",
       "validate": {
         "required": true
-      }
+      },
+      "serializeToString": true
     },
     {
       "label": "Area",
@@ -50,7 +51,9 @@
       "key": "post_area",
       "validate": {
         "required": true
-      }
+      },
+      "decimalDigits": 2,
+      "serializeToString": true
     },
     {
       "label": "Floor",
@@ -63,7 +66,8 @@
       "key": "post_floor",
       "validate": {
         "required": true
-      }
+      },
+      "serializeToString": true
     },
     {
       "label": "Address",
@@ -107,7 +111,9 @@
       "key": "post_price",
       "validate": {
         "required": true
-      }
+      },
+      "decimalDigits": 2,
+      "serializeToString": true
     },
     {
       "action": "submit",
