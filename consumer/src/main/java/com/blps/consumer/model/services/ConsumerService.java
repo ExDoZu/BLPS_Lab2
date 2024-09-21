@@ -1,17 +1,16 @@
 package com.blps.consumer.model.services;
 
-import com.blps.common.UserHistoryDto;
 import com.blps.common.ModerHistoryDto;
-import com.blps.consumer.model.repository.logstats.UserHistoryRepository;
+import com.blps.common.UserHistoryDto;
+import com.blps.consumer.beans.ModerHistory;
+import com.blps.consumer.beans.UserHistory;
 import com.blps.consumer.model.repository.logstats.ModerHistoryRepository;
+import com.blps.consumer.model.repository.logstats.UserHistoryRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import com.blps.consumer.beans.UserHistory;
-import com.blps.consumer.beans.ModerHistory;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,8 +44,8 @@ public class ConsumerService {
         log.info("Moder history saved: {}", moderHistory);
     }
 
-    @Scheduled(cron = "0 * * * * *")
-    public void cleanOldUserHistory() {
+    @KafkaListener(topics = "ping", groupId = "producer-1")
+    public void listenPing(ConsumerRecord<String, String> record) {
         LocalDateTime oneMinuteAgo = LocalDateTime.now().minusMinutes(1);
         log.info("Cleaning user history older than: {}", oneMinuteAgo);
 
@@ -55,6 +54,17 @@ public class ConsumerService {
 
         log.info("Deleted {} old user history entries.", oldEntries.size());
     }
+
+//    @Scheduled(cron = "0 * * * * *")
+//    public void cleanOldUserHistory() {
+//        LocalDateTime oneMinuteAgo = LocalDateTime.now().minusMinutes(1);
+//        log.info("Cleaning user history older than: {}", oneMinuteAgo);
+//
+//        List<UserHistory> oldEntries = userHistoryRepository.findByDatetimeBefore(oneMinuteAgo);
+//        userHistoryRepository.deleteAll(oldEntries);
+//
+//        log.info("Deleted {} old user history entries.", oldEntries.size());
+//    }
 
     private UserHistory convertToUserHistory(UserHistoryDto dto) {
         return new UserHistory(

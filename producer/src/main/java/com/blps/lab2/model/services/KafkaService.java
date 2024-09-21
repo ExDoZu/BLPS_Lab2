@@ -8,8 +8,6 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.KafkaFuture;
-import org.apache.kafka.common.internals.Topic;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -53,7 +51,8 @@ public class KafkaService {
             log.error("Failed to send message to topic '{}': {}", topicName, excp.getMessage(), excp);
         } finally {
             kafkaProducer.flush();
-            kafkaProducer.close();
         }
     }
+
 }
+

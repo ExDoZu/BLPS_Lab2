@@ -29,7 +29,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    @RequestScope
+//    @RequestScope
     public Producer<String, Object> kafkaProducer() {
         Map<String, Object> props = Map.of(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress,
