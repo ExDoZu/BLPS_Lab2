@@ -1,11 +1,13 @@
 package com.blps.lab2.delegates;
 
+import com.blps.common.UserHistoryDto;
 import com.blps.lab2.model.beans.post.Address;
 import com.blps.lab2.model.beans.post.Metro;
 import com.blps.lab2.model.beans.post.Post;
 import com.blps.lab2.model.repository.post.AddressRepository;
 import com.blps.lab2.model.repository.post.MetroRepository;
 import com.blps.lab2.model.repository.post.PostRepository;
+import com.blps.lab2.model.services.KafkaService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,8 @@ public class SaveDraft implements JavaDelegate {
     @Autowired
     private AddressRepository addressRepository;
 
-    
+    @Autowired
+    private KafkaService kafkaService;
 
     @Override
     public void execute(DelegateExecution execution) throws Exception {
@@ -70,5 +73,14 @@ public class SaveDraft implements JavaDelegate {
         Post savedPost = postRepository.save(post);
     
         execution.setVariable("saved_post_id", savedPost.getId());
+
+        UserHistoryDto userHistory = new UserHistoryDto(
+                null, userId,
+                UserHistoryDto.UserAction.CREATE,
+                savedPost.getId(),
+                null,
+                Date.from(java.time.Instant.now())
+            );
+            kafkaService.send("user_audit", userId, userHistory);
     }
 }
