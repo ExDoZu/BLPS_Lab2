@@ -87,7 +87,7 @@
     <bpmn:sequenceFlow id="Flow_157v9g4" sourceRef="TryWithdraw" targetRef="Gateway_0gfyx8p" />
     <bpmn:sequenceFlow id="Flow_0t9gey2" name="success" sourceRef="Gateway_0gfyx8p" targetRef="published" />
     <bpmn:sequenceFlow id="Flow_1n5rvyg" name="no money" sourceRef="Gateway_0gfyx8p" targetRef="no_money">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${payment_successfull==false}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${payment_successful==false}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:serviceTask id="SaveDraft" name="save draft" camunda:class="com.blps.lab2.delegates.SaveDraft">
       <bpmn:incoming>Flow_0ot2j4p</bpmn:incoming>
@@ -141,16 +141,16 @@
       <bpmndi:BPMNShape id="Participant_1080oo9_di" bpmnElement="Participant_1080oo9" isHorizontal="true">
         <dc:Bounds x="160" y="80" width="2190" height="660" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_071ft4s_di" bpmnElement="Lane_071ft4s" isHorizontal="true">
-        <dc:Bounds x="190" y="80" width="2160" height="310" />
+      <bpmndi:BPMNShape id="Lane_03l5u16_di" bpmnElement="Lane_03l5u16" isHorizontal="true">
+        <dc:Bounds x="190" y="594" width="2160" height="146" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_0rrk7b8_di" bpmnElement="Lane_0rrk7b8" isHorizontal="true">
         <dc:Bounds x="190" y="390" width="2160" height="204" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_03l5u16_di" bpmnElement="Lane_03l5u16" isHorizontal="true">
-        <dc:Bounds x="190" y="594" width="2160" height="146" />
+      <bpmndi:BPMNShape id="Lane_071ft4s_di" bpmnElement="Lane_071ft4s" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="2160" height="310" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
