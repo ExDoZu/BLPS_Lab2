@@ -11,6 +11,17 @@ public class GetAddresses implements JavaDelegate {
     @Override
     public void execute(DelegateExecution execution) throws Exception {
         System.out.println(this.getClass().getSimpleName());
+        String userId = execution.getProcessEngineServices().getIdentityService().getCurrentAuthentication().getUserId();
+        List<String> groups = execution.getProcessEngineServices().getIdentityService().getCurrentAuthentication().getGroupIds();
+        System.out.println(userId);
+        System.out.println(groups);
+
+        // if not in group user, throw exception
+        if (!groups.contains("user")) {
+            throw new Exception("You are not allowed to get addresses");
+        }
+
+        
 
         // Создаем список адресов
         List<Map<String, Object>> addresses = new ArrayList<>();

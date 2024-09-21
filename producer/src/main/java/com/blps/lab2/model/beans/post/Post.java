@@ -38,9 +38,8 @@ public class Post {
 
     private Boolean approved;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+
+    private String userId;
 
     // Flat fields
 

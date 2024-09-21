@@ -15,8 +15,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         @Query("select p from Post p " +
                         "inner join fetch p.address a " +
                         "left join fetch p.metro m " +
-                        "inner join fetch m.address ma" +
-                        "inner join fetch p.user u " +
+                        "inner join fetch m.address ma " +
+                        // "inner join fetch p.user u " +
                         "where " +
                         "(:city is null or a.city = :city) " +
                         "and (:street is null or a.street = :street) " +
@@ -50,9 +50,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                         @Param("branch_number") Integer branchNumber,
                         Pageable pageable);
 
-        @EntityGraph(attributePaths = { "user", "address", "metro" })
-        Page<Post> findByUser_PhoneNumber(String phoneNumber, Pageable pageable);
+        // @EntityGraph(attributePaths = { "user", "address", "metro" })
+        // Page<Post> findByUser_PhoneNumber(String phoneNumber, Pageable pageable);
 
-        @EntityGraph(attributePaths = { "user", "address", "metro" })
-        Page<Post> findByArchivedAndApproved(Boolean archived, Boolean approved, Pageable pageable);
+        // @EntityGraph(attributePaths = { "user", "address", "metro" })
+        // Page<Post> findByArchivedAndApproved(Boolean archived, Boolean approved, Pageable pageable);
 }
