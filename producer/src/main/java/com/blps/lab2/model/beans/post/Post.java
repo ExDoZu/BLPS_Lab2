@@ -29,7 +29,7 @@ public class Post {
     @Column(nullable = false)
     private Date creationDate;
 
-    private String[] pathsToPhotos;
+    // private String[] pathsToPhotos;
 
     private Date paidUntil;
 

@@ -11,15 +11,7 @@ import com.blps.lab2.model.beans.post.Address;
 
 @Repository
 public interface AddressRepository extends JpaRepository<Address, Long> {
-
-        @Query("SELECT a FROM Address a WHERE " +
-                        "(:city is null or a.city = :city) AND " +
-                        "(:street is null or a.street = :street) AND " +
-                        "(:hn is null or a.houseNumber = :hn) AND " +
-                        "(:hl is null or a.houseLetter = :hl)")
-        List<Address> findByMany(@Param("city") String city,
-                        @Param("street") String street,
-                        @Param("hn") Integer houseNumber,
-                        @Param("hl") Character houseLetter);
+  
+  List<Address> findAll();
 
 }

@@ -28,6 +28,15 @@ public class Address {
     @Column(nullable = false)
     private Integer houseNumber;
     
-    private Character houseLetter;;
+    private Character houseLetter;
+
+    public String getAddress() {
+      String address = street + " " + houseNumber;
+      if (houseLetter != null) {
+          address += houseLetter;
+      }
+      address += ", " + city;
+      return address;
+  }
 
 }
