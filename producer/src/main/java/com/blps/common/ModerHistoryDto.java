@@ -20,7 +20,7 @@ public class ModerHistoryDto {
 
     private Long id;
 
-    private Long moderID;
+    private String moderID;
 
     private ModerAction action;
 

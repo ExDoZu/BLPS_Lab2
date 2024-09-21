@@ -26,7 +26,7 @@ public class UserHistoryDto {
 
     private Long id;
 
-    private Long userID;
+    private String userID;
 
     private UserAction action;
 

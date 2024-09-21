@@ -29,7 +29,6 @@ public class GetAddresses implements JavaDelegate {
         System.out.println(userId);
         System.out.println(groups);
 
-        // if not in group user, throw exception
         if (!groups.contains("user")) {
             throw new Exception("You are not allowed to get addresses");
         }

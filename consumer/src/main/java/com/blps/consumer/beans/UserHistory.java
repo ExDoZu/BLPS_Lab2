@@ -32,7 +32,7 @@ public class UserHistory {
     private Long id;
 
     @Column(nullable = false)
-    private Long userID;
+    private String userID;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
